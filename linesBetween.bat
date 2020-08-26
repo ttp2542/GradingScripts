@@ -1,0 +1,2 @@
+python linesBetweenCommits.py %*
+pause
