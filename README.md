@@ -24,14 +24,14 @@ Welcome to the GradingScripts, home of all the scripts needed to grade the class
 
 Steps | Guiding Images
 :-----: | :-----------:
-1. Log into your Github account | 
-2. Go to the upper right-hand corner of the screen, click on the icon with your profile picture, and then on the settings. | ![](markdownImages/githubSettings.png)
-3. Click on the “Developer Settings” button at the bottom left. | ![](markdownImages/developerSettings.png)
-4. Click on the “Personal access tokens” button. | ![](markdownImages/personalAccessTokens.png)
-5. Click on the “Generate new token” icon in the top right of the screen (you may be prompted to log in again upon clicking this). | ![](markdownImages/generateNewToken.png)
-6. Add a Note so you know what the token is being used for and give it the “repo” and “read:packages” permissions. | ![](markdownImages/TokenSettings.png)
-7. Scroll to the bottom and click the “Generate token” button. | ![](markdownImages/generateToken.png)
-8. Copy this new token and put it somewhere safe (or put it into the script directly). NOTE: This will be stored in a file called temp.txt in the same location as the scripts. | ![](markdownImages/tokenFinishEx.png)
+Log into your Github account | 
+Go to the upper right-hand corner of the screen, click on the icon with your profile picture, and then on the settings. | ![](markdownImages/githubSettings.png)
+Click on the “Developer Settings” button at the bottom left. | ![](markdownImages/developerSettings.png)
+Click on the “Personal access tokens” button. | ![](markdownImages/personalAccessTokens.png)
+Click on the “Generate new token” icon in the top right of the screen (you may be prompted to log in again upon clicking this). | ![](markdownImages/generateNewToken.png)
+Add a Note so you know what the token is being used for and give it the “repo” and “read:packages” permissions. | ![](markdownImages/TokenSettings.png)
+Scroll to the bottom and click the “Generate token” button. | ![](markdownImages/generateToken.png)
+Copy this new token and put it somewhere safe (or put it into the script directly). NOTE: This will be stored in a file called temp.txt in the same location as the scripts. | ![](markdownImages/tokenFinishEx.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Some extra information about these tokens, you won’t be able to see them again after you get out of the page, so paste it in another file, or to where the script prompts you. The script will store it so you only have to do this once. However, if you delete the token on Github, the token will be rejected and you’ll need to delete or edit the temp.txt file in order to be able to use them again. You’ll probably crash the script if you try to use an invalid token, haven’t tried it personally.
 
