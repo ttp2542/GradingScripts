@@ -131,8 +131,7 @@ def process_processing(process, file, repo):
             result[i] = result[i].split(', ')
 
             # checks where insertions should be if files committed
-            if len(result[i]) > 1:
-                if 'insertion' in result[i][1]:
+            if len(result[i]) > 1 and 'insertion' in result[i][1]:
                     number_list = re.findall(r'\d+', result[i][1])
                     average_insert += int(number_list[0])
 
