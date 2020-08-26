@@ -10,7 +10,9 @@ Welcome to the GradingScripts, home of all the scripts needed to grade the class
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By now you should have pip (yay!). That means you’re on your way to being able to run the scripts at all! Now the next step is really easy. Now that you have pip, you just need to use it to install 3 packages that the scripts require. Those commands are as follows:
 
 >pip install gitpython
+
 >pip install PyGithub
+
 >pip install pygithub3
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now that you have all the packages installed you can now run the scripts, huzzah! But wait, what’s this information you need? It doesn’t just work? Blasphemy!
