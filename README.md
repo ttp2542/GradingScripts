@@ -59,6 +59,33 @@ Now let’s run through using each script beyond the first 2 prompts.
 
 ![](markdownImages/addingAssignment01.png)
 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The next script we got here is a QOL script for your grading pleasure. Right now when you clone the repositories, they have the students Github usernames, which isn't fun. Makes grading difficult. Well, I have a solution for you! Use the next script in line, renameRepos! 
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In order to use this script you do need to get one thing from Github Classroom, and that's the classlist. Let's figure out how to get those now. First up, open up Github classroom and (assuming your instructor has added you) you'll see something like this.
+
+![](markdownImages/githubClassroom.png)
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Once you're here you'll need to go to whatever section you're supposed to grade (for the sake of this example we'll say that I'm grading section 4).
+
+![](markdownImages/githubClassroomSection.png)
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So this is (roughly) the screen that you see. The next thing you'll have to do is click on the 'Students' tab located in the center of the screen. From there you click the 'Download' button that's located across from the section that says 'Classroom roster'.
+
+![](markdownImages/classroomRoster.png)
+
+Next it'll ask to download without group names, click that button and it'll download
+
+![](markdownImages/noGroupNames.png)
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From there it's relatively simple. Put the classroom roster into the same directory that you have the scripts in and run the script (assuming you have the repositories already cloned using the previous script). From there the script asks you for 2 things.
+
+![](markdownImages/renameReposEx.png)
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The first thing it asks you for is the assignment name. For this put in the same thing you did for the cloneRepositories script. If you don't remember, it should be the name of the overarching directory that houses all of the submitted assignments (ie "assignment-2-1"). The next thing is the name of the csv file. By default it is "classroom_roster.csv", however, you may change it to be whatever you want.
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may be asking **"but what about the directory names?"**. Well, if a student's directory isn't linked to there name on the classlist, this script can't magically know what the name of the student is, and leaves the directory untouched. If more than a couple of directory names are unchanged, there's a chance that you're in multiple Github classroom sections, meaning the repositories from the other section have there name unchanged. If you want to change them as well, you'll have to get that classlist as well. Anywho, moving on!
+
+
 The next script we’ll be going over is the addFiles script. 
 
 ![](markdownImages/addingFilesEx.png)
