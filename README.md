@@ -55,6 +55,8 @@ Now let’s run through using each script beyond the first 2 prompts.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After you enter all the information, the script will clone all the repositories and put them all into a folder in the same area as the scripts, and if it’s your first time running the script, the temp.txt file will show up as well.
 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For each assignment you'll likely have to run this script twice. To grade activities and the PSS, you'll need to input the time and date after the end of class (adding a 10 minute grace period wouldn't be a bad idea). So if class ended at 1:55pm on 8/24/2020, enter in 2020-08-24 and 14:05 for the date/time. **When in doubt, ask the instructor what grace period they'd like to add, if any.** The second time you run this script, you'll be inputting the time right before the next class, in order to grade the assignment itself **not the PSS and activities**. So say the next class was on 8/26/2020 at noon, you'd input 2020-08-26 and 12:00 for the date/time.
+
 ![](markdownImages/addingAssignment01.png)
 
 The next script we’ll be going over is the addFiles script. 
