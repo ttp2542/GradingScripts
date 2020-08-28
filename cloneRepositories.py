@@ -1,6 +1,7 @@
 import git
 import os
 from pygithub3 import Github
+from pathlib import Path
 
 """
 This script is meant to get all the repositories before a specific date
@@ -13,6 +14,7 @@ FILENAME = 'temp.txt'
 GITHUB_LINK = 'https://github.com/'
 FIRST_HALF_GIT_REV_LIST = 'git rev-list -n 1 --before="'
 SECOND_HALF_GIT_REV_LIST = '" origin/master'
+
 
 
 def main():
@@ -53,28 +55,27 @@ def main():
     # gets the name of all the student repos ie 'assignment-username'
     repo_list = get_repos(assignment_name, gh)
 
-    # the initial path is the working directory of the script
-    initial_path = os.getcwd()
+    # creates the path for the assignment a string of the path
+    initial_path = Path.cwd() / assignment_name
 
-    # makes a folder for the assignment as a whle
-    initial_path = initial_path + "\\" + assignment_name
-    make_folder(initial_path)
+    # makes a folder for the assignment as a whole
+    initial_path.mkdir()
 
     # creates a folder, clones the repository, then checks out to before a date
     # the folder created is within the first folder made above, so all assignments
     # are in one convenient folder
     for repo in repo_list:
-        path = initial_path + "\\" + repo.name
-        make_folder(path)
-        os.system('git clone ' + github_link + repo.name + ' ' + "\"" + path + "\"")
-        os.chdir(path)
+        path = initial_path / repo.name
+        path.mkdir()
+        os.system('git clone ' + github_link + repo.name + ' ' + "\"" + str(path) + "\"")
+        os.chdir(str(path))
         gitString = FIRST_HALF_GIT_REV_LIST + date_due.strip() + ' ' + time_due + SECOND_HALF_GIT_REV_LIST
         process = os.popen(gitString)
         commit = process.read()
         os.system('git checkout ' + commit)
         process.close()
 
-
+    
 """
 This function gets the repos for the specific assignment
 """
