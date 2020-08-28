@@ -3,7 +3,7 @@ Welcome to the GradingScripts, home of all the scripts needed to grade the class
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here is a brief guide for how to use the grading scripts for CSEC/SWEN-123. In this quick guide, I’ll be going over how to use these scripts, each of there purposes, and how to use them for the first time. If you’re not a CA for CSEC/SWEN-123, please stop reading. Or don’t. Not like this will be a very entertaining read.
 
-![](markdownImages/allFilesOnGithub.jpg)
+![](markdownImages/allFilesOnGithub.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before we get started with other things, let’s make sure you have installed what you need to actually run the scripts. In order to make life easier, we’re going to first start out with a tool called pip. If you installed Python, pip should already be on your computer, but in case it isn’t, go to this link and follow the instructions: https://pip.pypa.io/en/stable/installing/. It’s ok. I’ll wait for you to get back.
 
@@ -83,7 +83,7 @@ Next it'll ask to download without group names, click that button and it'll down
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The first thing it asks you for is the assignment name. For this put in the same thing you did for the cloneRepositories script. If you don't remember, it should be the name of the overarching directory that houses all of the submitted assignments (ie "assignment-2-1"). The next thing is the name of the csv file. By default it is "classroom_roster.csv", however, you may change it to be whatever you want.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may be asking **"but what about the directory names?"**. Well, if a student's directory isn't linked to there name on the classlist, this script can't magically know what the name of the student is, and leaves the directory untouched. If more than a couple of directory names are unchanged, there's a chance that you're in multiple Github classroom sections, meaning the repositories from the other section have there name unchanged. If you want to change them as well, you'll have to get that classlist as well. Anywho, moving on!
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may be asking **"but what about the unchanged directory names?"**. Well, if a student's directory isn't linked to there name on the classlist, this script can't magically know what the name of the student is, and leaves the directory untouched. If more than a couple of directory names are unchanged, there's a chance that you're in multiple Github classroom sections, meaning the repositories from the other section have there name unchanged. If you want to change them as well, you'll have to get that classlist as well. Anywho, moving on!
 
 
 The next script we’ll be going over is the addFiles script. 
