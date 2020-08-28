@@ -2,6 +2,7 @@ import git
 import os
 from pygithub3 import Github
 import re
+from pathlib import Path
 
 """
 This script checks the average number of lines between each commit for
@@ -42,14 +43,11 @@ def main():
     # the name of the assignment to get
     assignment_name = input("Please input the assignment name: ")
 
-    # the initial path is the working directory of the script
-    initial_path = os.getcwd()
-
-    # makes a folder for the assignment as a whole
-    initial_path = initial_path + "\\" + assignment_name
+    # makes the path of the directory that should exist
+    initial_path = Path.cwd() / assignment_name
 
     # ensures that the repos been cloned
-    if not os.path.isdir(initial_path):
+    if not os.path.isdir(str(initial_path)):
         print('Please make sure the repositories are cloned or'
               ' that you didn\'t mistype the assignment name')
     else:
@@ -68,7 +66,7 @@ def main():
         # writes the results into a file for convenience sake
         for repo in repo_list:
             # go to the cloned repository
-            path = initial_path + "\\" + repo.name
+            path = initial_path / repo.name
             os.chdir(path)
 
             # use git to get the stats (haha git get)
