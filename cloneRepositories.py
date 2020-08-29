@@ -53,7 +53,7 @@ def main():
     time_due = input("Please input the time the "
                      "assignment's due (24 hour time ie 23:59 = 11:59 pm): ")
     # gets the name of all the student repos ie 'assignment-username'
-    repo_list = get_repos(assignment_name, gh)
+    repo_list = get_repos_specified_usernames(assignment_name, gh)
 
     # creates the path for the assignment a string of the path
     initial_path = Path.cwd() / assignment_name
@@ -87,6 +87,21 @@ def get_repos(assignment_name, github):
 
     return repo_list
 
+"""
+Modified to only pull student's repos in the specified text file students.txt 
+This function gets the repos for the specific assignment for the students whose usernames are in the text file.
+"""
+def get_repos_specified_usernames(assignment_name, github):
+    students_file = open("students.txt", "r")
+    students = students_file.read().splitlines()
+    students_file.close()
+    repo_list = []
+    for repo in github.get_user().get_repos():
+        if assignment_name in repo.name:
+            for student in students:
+                if student in repo.name:
+                    repo_list.append(repo)
+    return repo_list
 
 """
 This function makes a folder at a specific path
