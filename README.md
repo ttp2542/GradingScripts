@@ -82,7 +82,7 @@ Next it'll ask to download without group names, click that button and it'll down
 
 ![](markdownImages/renameReposEx.png)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The first thing it asks you for is the assignment name. For this put in the same thing you did for the cloneRepositories script. If you don't remember, it should be the name of the overarching directory that houses all of the submitted assignments (ie "assignment-2-1"). The next thing is the name of the csv file. By default it is "classroom_roster.csv", however, you may change it to be whatever you want.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The first thing it asks you for is the assignment name. For this put in the same thing you did for the cloneRepositories script. If you don't remember, it should be the name of the overarching directory that houses all of the submitted assignments (ie "assignment-2-1"). The next thing is the name of the csv file. By default it is "classroom_roster.csv", however, you may change it to be whatever you want. If you choose to input nothing (just hit enter) for the name of the csv file, it will assume that the file is named "classroom_roster.csv".
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may be asking **"but what about the unchanged directory names?"**. Well, if a student's directory isn't linked to there name on the classlist, this script can't magically know what the name of the student is, and leaves the directory untouched. If more than a couple of directory names are unchanged, there's a chance that you're in multiple Github classroom sections, meaning the repositories from the other section have there name unchanged. If you want to change them as well, you'll have to get that classlist as well. Anywho, moving on!
 
