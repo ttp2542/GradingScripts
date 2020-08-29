@@ -9,6 +9,8 @@ gotten from the Github Classroom site
 
 @author Trey Pachucki ttp2542@g.rit.edu
 """
+DEFAULT_PATH = 'classroom_roster.csv'
+
 def main():
 
     # the name of the assignment to get
@@ -16,6 +18,10 @@ def main():
 
     # the name of the csv file with the classlist
     classlist = input("Please input the name of the csv file with the classlist: ")
+    
+    # If nothing is entered, assume the roster is the default path
+    if classlist == '':     
+        classlist = DEFAULT_PATH
 
     # gets the cwd for the initial path
     initial_path = Path.cwd()
