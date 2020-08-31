@@ -57,22 +57,25 @@ def main():
 
         # we are now in the overarching folder for the assignment
         os.chdir(initial_path)
-
+        
         # make a file to store all this shite in
         file = open(AVERAGE_LINE_FILE_NAME, 'w')
         file.write(assignment_name)
         file.write('\n\n')
-
+        
+        tracker = 0
         # writes the results into a file for convenience sake
-        for repo in repo_list:
-            # go to the cloned repository
-            path = initial_path / repo.name
-            os.chdir(path)
+        for directory in os.listdir(initial_path):
+            next_directory = initial_path / directory
+            if os.path.isdir(next_directory):
+                # go to the cloned repository
+                os.chdir(next_directory)
 
-            # use git to get the stats (haha git get)
-            process = os.popen(GIT_COMMAND)
-            process_processing(process, file, repo)
-            process.close()
+                # use git to get the stats (haha git get)
+                process = os.popen(GIT_COMMAND)
+                process_processing(process, file, repo_list[tracker])
+                process.close()
+                tracker += 1
 
         # closes file when everything is done
         file.close()
