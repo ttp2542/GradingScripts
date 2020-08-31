@@ -51,7 +51,7 @@ Now let’s run through using each script beyond the first 2 prompts.
 
 ![](markdownImages/assignmentsEx.png)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, you enter the day that it’s due in the proper format (‘yyyy-mm-dd’, ex: 2020-08-18). After that the time that the assignment is due (so it only gets the commits before that time) in 24 hour format (ex: ‘23:59’ for 11:59pm).
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, you enter the day that it’s due in the proper format (‘yyyy-mm-dd’, ex: 2020-08-18). After that the time that the assignment is due (so it only gets the commits before that time) in 24 hour format (ex: ‘23:59’ for 11:59pm). The final prompt you'll be getting will be asking you about if you want to name a text file of student Github usernames. Entirely optional, but if you decide to make one, just enter the name of the file here. This will limit the amount repos you clone to just that list (so if you need to grade a specific person for a specific time, or if you only grade one half of a section, you can do this).
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After you enter all the information, the script will clone all the repositories and put them all into a folder in the same area as the scripts, and if it’s your first time running the script, the temp.txt file will show up as well.
 
