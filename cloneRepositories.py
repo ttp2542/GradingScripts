@@ -1,6 +1,5 @@
 import git
 import os
-import sys
 from pygithub3 import Github
 from pathlib import Path
 
@@ -54,12 +53,13 @@ def main():
     time_due = input("Please input the time the "
                      "assignment's due (24 hour time ie 23:59 = 11:59 pm): ")
     # gets the name of all the student repos ie 'assignment-username'
-    if len(sys.argv) > 1:
-        # Generate repo list with the use of helper file
-        repo_list = get_repos_specified_usernames(assignment_name, gh, sys.argv[1])
-    else:
+    student_file_address = input("OPTIONAL : Enter file address of text file containing the usernames of students you are grading (one username per line). To ignore, just hit 'enter' : ")
+    if student_file_address == "":
         # Generate repo list like it did prior
         repo_list = get_repos(assignment_name, gh)
+    else:
+        # Generate repo list with the use of helper file
+        repo_list = get_repos_specified_usernames(assignment_name, gh, student_file_address)
 
     # creates the path for the assignment a string of the path
     initial_path = Path.cwd() / assignment_name
