@@ -52,9 +52,6 @@ def main():
               ' that you didn\'t mistype the assignment name')
     else:
 
-        # gets the name of all the student repos ie 'assignment-username'
-        repo_list = get_repos(assignment_name, gh)
-
         # we are now in the overarching folder for the assignment
         os.chdir(initial_path)
         
@@ -73,7 +70,7 @@ def main():
 
                 # use git to get the stats (haha git get)
                 process = os.popen(GIT_COMMAND)
-                process_processing(process, file, repo_list[tracker])
+                process_processing(process, file, directory, assignment_name)
                 process.close()
                 tracker += 1
 
@@ -82,34 +79,10 @@ def main():
 
 
 """
-This function gets the repos for the specific assignment
-"""
-def get_repos(assignment_name, github):
-    repo_list = []
-    for repo in github.get_user().get_repos():
-        if assignment_name in repo.name:
-            repo_list.append(repo)
-
-    return repo_list
-
-
-"""
-This function makes a folder at a specific path
-"""
-def make_folder(path):
-    try:
-        os.mkdir(path)
-    except OSError:
-        print("Creation of the directory %s failed" % path)
-    else:
-        print("Successfully created the directory %s " % path)
-
-
-"""
 This function does most of the work after the process has been done.
 By taking this out, it's easier to see how to redo this in the future.
 """
-def process_processing(process, file, repo):
+def process_processing(process, file, directory, assignment_name):
     # get the results from the process
     result = process.read()
     result = result.split('\n')
@@ -147,9 +120,8 @@ def process_processing(process, file, repo):
         average_insert = average_insert / total_times_inserted
 
     # formats the string
-    repo_name_split = repo.name.split('-')
-    user_name = repo_name_split[len(repo_name_split) - 1]
-    insertion_string = user_name + ' Average Insertions: ' + str(average_insert)
+    name = directory.strip(assignment_name + "-")
+    insertion_string = name + ' Average Insertions: ' + str(average_insert)
 
     # writes the final result to the file, prints it out, and closes process
     file.write(insertion_string + '\n')
