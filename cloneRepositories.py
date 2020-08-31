@@ -1,5 +1,6 @@
 import git
 import os
+import sys
 from pygithub3 import Github
 from pathlib import Path
 
@@ -53,7 +54,12 @@ def main():
     time_due = input("Please input the time the "
                      "assignment's due (24 hour time ie 23:59 = 11:59 pm): ")
     # gets the name of all the student repos ie 'assignment-username'
-    repo_list = get_repos_specified_usernames(assignment_name, gh)
+    if len(sys.argv) > 1:
+        # Generate repo list with the use of helper file
+        repo_list = get_repos_specified_usernames(assignment_name, gh, sys.argv[1])
+    else:
+        # Generate repo list like it did prior
+        repo_list = get_repos(assignment_name, gh)
 
     # creates the path for the assignment a string of the path
     initial_path = Path.cwd() / assignment_name
@@ -90,9 +96,11 @@ def get_repos(assignment_name, github):
 """
 Modified to only pull student's repos in the specified text file students.txt 
 This function gets the repos for the specific assignment for the students whose usernames are in the text file.
+
+NOTE : student file address leads to the text file containing the usernames of your students. One username per line.
 """
-def get_repos_specified_usernames(assignment_name, github):
-    students_file = open("students.txt", "r")
+def get_repos_specified_usernames(assignment_name, github, student_file_address):
+    students_file = open(student_file_address, "r")
     students = students_file.read().splitlines()
     students_file.close()
     repo_list = []
