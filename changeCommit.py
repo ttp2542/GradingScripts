@@ -5,8 +5,7 @@ import re
 from pathlib import Path
 
 """
-This script checks the average number of lines between each commit for
-a specific assignment.
+This script changes the commit head of a previously cloned repository.
 
 @author Trey Pachucki ttp2542@g.rit.edu
 """
@@ -65,10 +64,11 @@ def main():
         # formatting of the git string
         gitString = FIRST_HALF_GIT_REV_LIST + date_due.strip() + ' ' + time_due + SECOND_HALF_GIT_REV_LIST
 
-        # writes the results into a file for convenience sake
+        # Iterate over the directories in the folder
         for directory in os.listdir(initial_path):
             next_directory = initial_path / directory
             if os.path.isdir(next_directory):
+                
                 # go to the cloned repository
                 os.chdir(next_directory)
 
