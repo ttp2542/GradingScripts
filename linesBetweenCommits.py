@@ -10,6 +10,7 @@ a specific assignment.
 
 @author Trey Pachucki ttp2542@g.rit.edu
 """
+
 FILENAME = 'temp.txt'
 GITHUB_LINK = 'https://github.com/'
 GIT_COMMAND = 'git log --oneline --shortstat'
@@ -128,4 +129,5 @@ def process_processing(process, file, directory, assignment_name):
     print(insertion_string)
 
 
-main()
+if __name__ == "__main__":  
+    main()

@@ -20,13 +20,13 @@ SECOND_HALF_GIT_REV_LIST = '" origin/master'
 def main():
     # if this script has been run before use the past information
     try:
-        file = open('temp.txt', 'r')
+        file = open(FILENAME, 'r')
         token = file.readline()
         organization = file.readline()
 
     # otherwise get the information from the user
     except FileNotFoundError:
-        file = open('temp.txt', 'w')
+        file = open(FILENAME, 'w')
         token = input("Please input your Github Authentication Token: ")
         organization = input("Please input the organization name: ")
 
@@ -123,4 +123,5 @@ def make_folder(path):
         print("Successfully created the directory %s " % path)
 
 
-main()
+if __name__ == "__main__":
+    main()

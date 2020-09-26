@@ -57,5 +57,5 @@ def main():
         if os.path.isdir(current_path):
             current_path.rename(new_path)
         
-
-main()
+if __name__ == "__main__":
+    main()
