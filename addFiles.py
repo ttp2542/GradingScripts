@@ -1,6 +1,7 @@
 import git
 import os
 from pygithub3 import Github
+from pathlib import Path
 
 """
 This script is meant to be used to copy files from a directory into all the
@@ -47,7 +48,7 @@ def main():
     start_folder = input("Please input the name of the folder with files: ")
 
     # the destination folder for the files
-    end_path = input("Please input the path to the folder in github: ")
+    ending_path = input("Please input the path to the folder in github: ")
 
     # the commit message
     commit_msg = input("Please specify the commit message: ")
@@ -55,27 +56,33 @@ def main():
     # gets the name of all the student repos ie 'assignment-username'
     repo_list = get_repos(assignment_name, gh)
 
-    # the initial path is the working directory of the script
-    initial_path = os.getcwd()
+    # creates the path for the assignment a string of the path
+    initial_path = Path.cwd() / assignment_name
+
+    # makes a folder for the assignment as a whole
+    initial_path.mkdir()
 
     # change into the folder to get all the files
-    init_folder_path = initial_path + "\\" + start_folder
+    init_folder_path = Path.cwd() / start_folder
 
-    # makes a folder for the assignment as a whle
-    initial_path = initial_path + "\\" + assignment_name
-    make_folder(initial_path)
-
+    print(repo_list)
     # creates a folder, clones the repository, then checks out to before a date
     # the folder created is within the first folder made above, so all assignments
     # are in one convenient folder
     for repo in repo_list:
-        path = initial_path + "\\" + repo.name
-        make_folder(path)
-        os.system('git clone ' + github_link + repo.name + ' ' + path)
-        end_path = path + "\\" + end_path
+        path = initial_path / repo.name
+        path.mkdir()
 
-        # makes the path in the repository
-        make_folder(end_path)
+        os.system('git clone ' + github_link + repo.name + ' ' + str(path))
+        end_path = ""
+        if ending_path != "":
+            end_path = path / end_path
+            # makes the path in the repository
+            end_path.mkdir()
+        else:
+            end_path = path
+           
+        
 
         # processes folder
         process(init_folder_path, end_path)
@@ -99,17 +106,6 @@ def get_repos(assignment_name, github):
 
 
 """
-This function makes a folder at a specific path
-"""
-def make_folder(path):
-    try:
-        os.mkdir(path)
-    except OSError:
-        print("Creation of the directory %s failed" % path)
-    else:
-        print("Successfully created the directory %s " % path)
-
-"""
 This processes the folders (ie copies the files and adds them via git
 """
 def process(item_path, target_directory):
@@ -117,12 +113,12 @@ def process(item_path, target_directory):
     if os.path.isdir(item_path):
         os.chdir(item_path)
         ls = os.listdir(item_path)
-        name_of_directory = item_path.split("\\")
+        name_of_directory = str(item_path).split("\\")
         name_of_directory = name_of_directory[len(name_of_directory) - 1]
-        new_dir = target_directory + "\\" + name_of_directory
-        make_folder(new_dir)
+        new_dir = target_directory / name_of_directory
+        new_dir.mkdir()
         for item in ls:
-            temp_path = item_path + "\\" + item
+            temp_path = item_path / item
             process(temp_path, new_dir)
 
     # if not, copy it into the file structure and add it to git
@@ -134,8 +130,8 @@ def process(item_path, target_directory):
         # print("Target Directory: " + target_directory)
 
         # copies file and adds them to Git
-        os.system("copy " + item_path + " " + target_directory)
-        item_name = item_path.split("\\")
+        os.system("copy " + str(item_path) + " " + str(target_directory))
+        item_name = str(item_path).split("\\")
         item_name = item_name[len(item_name) - 1]
         os.chdir(target_directory)
         os.system('git add ' + item_name)
