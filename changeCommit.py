@@ -13,7 +13,7 @@ This script changes the commit head of a previously cloned repository.
 GITHUB_LINK = 'https://github.com/'
 TEMP_FILE_NAME = 'temp.txt'
 FIRST_HALF_GIT_REV_LIST = 'git rev-list -n 1 --before="'
-SECOND_HALF_GIT_REV_LIST = '" origin/master'
+SECOND_HALF_GIT_REV_LIST = '" origin/main'
 
 
 def main():

@@ -13,7 +13,7 @@ and the assignment name.
 FILENAME = 'temp.txt'
 GITHUB_LINK = 'https://github.com/'
 FIRST_HALF_GIT_REV_LIST = 'git rev-list -n 1 --before="'
-SECOND_HALF_GIT_REV_LIST = '" origin/master'
+SECOND_HALF_GIT_REV_LIST = '" origin/main'
 
 
 
