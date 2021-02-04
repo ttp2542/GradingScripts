@@ -18,6 +18,7 @@ SECOND_HALF_GIT_REV_LIST = '" origin/main'
 
 
 def main():
+    organization = ""
     # if this script has been run before use the past information
     try:
         file = open(FILENAME, 'r')
@@ -56,10 +57,10 @@ def main():
     student_file_address = input("OPTIONAL : Enter file address of text file containing the usernames of students you are grading (one username per line). To ignore, just hit 'enter' : ")
     if student_file_address == "":
         # Generate repo list like it did prior
-        repo_list = get_repos(assignment_name, gh)
+        repo_list = get_repos(assignment_name, gh, organization)
     else:
         # Generate repo list with the use of helper file
-        repo_list = get_repos_specified_usernames(assignment_name, gh, student_file_address)
+        repo_list = get_repos_specified_usernames(assignment_name, gh, student_file_address, organization)
 
     # creates the path for the assignment a string of the path
     initial_path = Path.cwd() / assignment_name
@@ -85,9 +86,9 @@ def main():
 """
 This function gets the repos for the specific assignment
 """
-def get_repos(assignment_name, github):
+def get_repos(assignment_name, github, organization):
     repo_list = []
-    for repo in github.get_user().get_repos():
+    for repo in github.get_user().get_repos() and repo.organization.login == organization:
         if assignment_name in repo.name:
             repo_list.append(repo)
 
@@ -99,13 +100,13 @@ This function gets the repos for the specific assignment for the students whose 
 
 NOTE : student file address leads to the text file containing the usernames of your students. One username per line.
 """
-def get_repos_specified_usernames(assignment_name, github, student_file_address):
+def get_repos_specified_usernames(assignment_name, github, student_file_address, organization):
     students_file = open(student_file_address, "r")
     students = students_file.read().splitlines()
     students_file.close()
     repo_list = []
     for repo in github.get_user().get_repos():
-        if assignment_name in repo.name:
+        if assignment_name in repo.name and repo.organization.login == organization:
             for student in students:
                 if student in repo.name:
                     repo_list.append(repo)
