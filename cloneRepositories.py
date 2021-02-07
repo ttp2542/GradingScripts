@@ -88,8 +88,8 @@ This function gets the repos for the specific assignment
 """
 def get_repos(assignment_name, github, organization):
     repo_list = []
-    for repo in github.get_user().get_repos() and repo.organization.login == organization:
-        if assignment_name in repo.name:
+    for repo in github.get_user().get_repos():
+        if assignment_name in repo.name and repo.organization.login == organization:
             repo_list.append(repo)
 
     return repo_list
