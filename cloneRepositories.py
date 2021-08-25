@@ -26,6 +26,7 @@ The Thread that clones the repo
 class CloneRepoThread(Thread):
     __slots___ = ['__repo', '__assignment_name', '__date_due', '__time_due', '__students', '__student_filename', '__initial_path', '__default_branch']
 
+
     def __init__(self, repo, assignment_name, date_due, time_due, students, student_filename, initial_path, default_branch):
         self.__repo = repo
         self.__assignment_name = assignment_name
@@ -37,13 +38,14 @@ class CloneRepoThread(Thread):
         self.__default_branch = default_branch
         super().__init__()
 
+
     '''
     Clones given repo and renames destination to student real name if class roster is provided.
     '''
     def run(self):
         try:
             clone_repo(self.__repo, self.__assignment_name, self.__date_due, self.__time_due, self.__students, self.__student_filename, self.__initial_path, self.__default_branch)
-        except:
+        except: # Catch exception raised by clone_repo and interrupt main thread
             print(f'ERROR: Sorry, ran into a problem while cloning `{self.__repo.name}`. Check tmp/logs.log.')
             logging.exception('ERROR:')
             _thread.interrupt_main()            
@@ -123,7 +125,6 @@ def file_exists_handler(path):
             shutil.rmtree(path)
             Path.mkdir(path)
         except:
-            print(f'ERROR: File `{path}` already exists, please delete it and run again')
             raise FileExistsError()
     else:
         Path.mkdir(path)
@@ -229,15 +230,15 @@ def clone_repo(repo, assignment_name, date_due, time_due, students, use_students
         path = initial_path / repo.name
     # Clone repo
     print(f'Cloning {repo.name} into {path}...')
-    subprocess.run(f'git clone {repo.clone_url} "{str(path)}"', stderr=subprocess.PIPE)
-    # Get commit hash at timestamp and reset local repo to timestamp
+    subprocess.run(f'git clone {repo.clone_url} "{str(path)}"', stderr=subprocess.PIPE) # git clone to output file, Hides output from console
+    # Get commit hash at timestamp and reset local repo to timestamp (git rev-list output piped to git checkout)
     rev_list_process = subprocess.Popen(f'git rev-list -n 1 --before="{date_due.strip()} {time_due.strip()}" origin/{default_branch} | git checkout', cwd=path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     with rev_list_process: # Output command responds to log file
         for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
-            logging.info('Subprocess: %r', line)
             line = str(line)
             if 'fatal' in line.lower() or 'error' in line.lower(): # if git command threw error (usually wrong branch name)
-                raise Exception("ERROR: An error has occured, check tmp/logs.log")
+                logging.info('Subprocess: %r', line) # Log error
+                raise Exception("ERROR: An error has occured, check tmp/logs.log") # Raise exception to the thread
     exit_code = rev_list_process.wait()
 
     # if process didn't exit successfully
@@ -306,7 +307,9 @@ def main():
         print()
         print(f'Done.')
         print(f'Cloned {len(repos)} repo(s) for assignment `{assignment_name}`')
-    except FileExistsError:
+    except FileExistsError: # Error thrown if parent assignment file already exists
+        print()
+        print(f'ERROR: File `{path}` already exists, please delete it and run again')
         return
     except KeyboardInterrupt: # When thread fails because subprocess command threw some error/exception
         print()
