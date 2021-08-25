@@ -82,6 +82,8 @@ def get_students(student_filename: str) -> dict:
                 github = student[1]
                 if name and github:
                     students[github] = name
+    else:
+        raise FileNotFoundError()
     return students
 
 
@@ -307,10 +309,12 @@ def main():
         print()
         print(f'Done.')
         print(f'Cloned {len(repos)} repo(s) for assignment `{assignment_name}`')
+    except FileNotFoundError:
+        print()
+        print(f'Classroom roster `{student_filename}` not found.')
     except FileExistsError: # Error thrown if parent assignment file already exists
         print()
-        print(f'ERROR: File `{path}` already exists, please delete it and run again')
-        return
+        print(f'ERROR: File `{initial_path}` already exists, please delete it and run again')
     except KeyboardInterrupt: # When thread fails because subprocess command threw some error/exception
         print()
         print('ERROR: Something happened during the cloning process; your repos are not at the proper timestamp. Delete the assignment folder and run again.')
