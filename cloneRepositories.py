@@ -13,10 +13,10 @@ from github import Github
 from github.Organization import Organization
 from threading import Thread
 from github.Repository import Repository
-"""
+'''
 Script to clone all or some repositories in a Github Organization based on repo prefix and usernames
 @author Kamron Cole kjc8084@rit.edu
-"""
+'''
 CONFIG_PATH = 'tmp/config.txt' # Stores token and org name
 BASE_GITHUB_LINK = 'https://github.com'
 MIN_GIT_VERSION = 2.30
@@ -42,7 +42,6 @@ class CloneRepoThread(Thread):
         self.__students = students
         self.__student_filename = student_filename
         self.__initial_path = initial_path
-        self.setDaemon = True
         super().__init__()
 
 
@@ -185,7 +184,7 @@ def read_config() -> tuple:
             print('OPTIONAL: Enter filename of csv file containing username and name of students. To ignore, just hit `enter`')
             student_filename = input('If ignored, repo names will not be changed to match student names: ')
             if student_filename: # if class roster was entered, set in config, check if use_classlist should be updated as well
-                use_classlist = input('Use this like every time? (can be changed later in tmp/config.txt) (Y/N): ')
+                use_classlist = input('Use this every time? (can be changed later in tmp/config.txt) (Y/N): ')
                 # Convert raw input boolean
                 if 'y' in use_classlist.lower():
                     use_classlist = 'True'
@@ -211,7 +210,7 @@ def make_default_config():
     print('OPTIONAL: Enter filename of csv file containing username and name of students. To ignore, just hit `enter`')
     student_filename = input('If ignored, repo names will not be changed to match student names: ')
     if student_filename:
-        use_classlist = input('Use this like every time? (can be changed later in tmp/config.txt) (Y/N): ')
+        use_classlist = input('Use this every time? (can be changed later in tmp/config.txt) (Y/N): ')
         # Convert raw input to boolean
         if 'y' in use_classlist.lower():
             use_classlist = 'True'
@@ -286,12 +285,12 @@ def main():
         date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ')
         if not date_due:
             current_date = date.today()
-            date_due = current_date.strftime("%Y-%m-%d")
+            date_due = current_date.strftime('%Y-%m-%d')
             print(f'Using current date: {date_due}')
         time_due = input('Time Due (24hr, press `enter` for current): ')
         if not time_due:
             current_time = datetime.now()
-            time_due = current_time.strftime("%H:%M")
+            time_due = current_time.strftime('%H:%M')
             print(f'Using current date: {time_due}')
         print()
 
@@ -314,6 +313,7 @@ def main():
         for repo in repos:
             # Create thread that clones repo and add to thread list
             thread = CloneRepoThread(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path)
+            thread.setDaemon(True)
             threads += [thread]
 
         # Run all clone threads
@@ -336,7 +336,7 @@ def main():
         logging.error(e)
     except KeyboardInterrupt as e: # When thread fails because subprocess command threw some error/exception
         print()
-        print('ERROR: Main thread was interrupted. Your repos are not at the proper timestamp. Delete the assignment folder and run again.')
+        print('ERROR: Something happened during the cloning process; your repos are not at the proper timestamp. Delete the assignment folder and run again.')
         logging.error(e)
     except ValueError as e: # When git version is incompatible w/ script
         print()
