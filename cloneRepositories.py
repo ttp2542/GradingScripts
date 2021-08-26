@@ -1,6 +1,7 @@
 from io import StringIO
 from pathlib import Path
 import csv
+import github
 import logging
 import os
 import re
@@ -21,6 +22,7 @@ AVERAGE_LINES_FILENAME = 'avgLinesInserted.txt'
 CONFIG_PATH = 'tmp/config.txt' # Stores token, org name, save class roster bool, class roster path, output dir
 BASE_GITHUB_LINK = 'https://github.com'
 MIN_GIT_VERSION = 2.30
+MIN_PYGITHUB_VERSION = 1.55
 MAX_THREADS = 200
 LOG_FILE_PATH = 'tmp/logs.log'
 LIGHT_GREEN = '\033[1;32m'
@@ -325,8 +327,19 @@ Check that git version is above min requirements for script
 def check_git_version():
     git_version = str(subprocess.check_output('git --version', stderr=subprocess.PIPE))[14:18]
     if float(git_version) < MIN_GIT_VERSION:
-        raise ValueError('Incompatible git version.')
+        raise ValueError(f'Your version of git is not compatible with this script. Use version {MIN_GIT_VERSION}+.')
 
+
+def check_pygithub_version():
+    version = 0.0
+    check_pygithub_version_process = subprocess.Popen('pip show pygithub', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    with check_pygithub_version_process:
+        for line in iter(check_pygithub_version_process.stdout.readline, b''): # b'\n'-separated lines
+            line = str(line).lower()
+            if 'version:' in line:
+                version = float(line.split(': ')[1][0:4])
+        if version < MIN_PYGITHUB_VERSION:
+            raise ValueError(f'Incompatible PyGithub version. Use version {MIN_PYGITHUB_VERSION}+. Use `pip install PyGithub --upgrade` to update')
 
 '''
 Loop through average insertions dict created by CloneRepoThreads and write to file in assignment dir
@@ -351,6 +364,8 @@ def main():
     try:
         # Check local git version is compatible with script
         check_git_version()
+        # Check local PyGithub module version is compatible with script
+        check_pygithub_version()
         # Read config file, if doesn't exist make one using user input.
         token, organization, student_filename, output_dir = read_config()
 
@@ -417,7 +432,7 @@ def main():
         logging.error(e)
     except ValueError as e: # When git version is incompatible w/ script
         print()
-        print(f'ERROR: Your version of git is not compatible with this script. Use version {MIN_GIT_VERSION}+.')
+        print(e)
         logging.error(e)
     except Exception as e:
         print(f'ERROR: Something happened. Check {LOG_FILE_PATH}')
