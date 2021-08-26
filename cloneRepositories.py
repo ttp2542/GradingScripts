@@ -32,8 +32,8 @@ AVG_INSERTIONS_DICT = dict()
 '''
 The Thread that clones the repo
 '''
-class CloneRepoThread(Thread):
-    __slots___ = ['__repo', '__assignment_name', '__date_due', '__time_due', '__students', '__student_filename', '__initial_path']
+class RepoHandler(Thread):
+    __slots___ = ['__repo', '__assignment_name', '__date_due', '__time_due', '__students', '__student_filename', '__initial_path', '__repo_path']
 
 
     def __init__(self, repo, assignment_name, date_due, time_due, students, student_filename, initial_path):
@@ -44,6 +44,10 @@ class CloneRepoThread(Thread):
         self.__students = students
         self.__student_filename = student_filename
         self.__initial_path = initial_path
+        if self.__student_filename: # If a classroom roster is used, replace github name with real name
+            self.__repo_path = self.__initial_path / get_new_repo_name(self.__repo, self.__students, self.__assignment_name) # replace repo name when cloning to have student's real name
+        else:
+            self.__repo_path = self.__initial_path / self.__repo.name
         super().__init__()
 
 
@@ -51,12 +55,94 @@ class CloneRepoThread(Thread):
     Clones given repo and renames destination to student real name if class roster is provided.
     '''
     def run(self):
-        try:
-            clone_repo(self.__repo, self.__assignment_name, self.__date_due, self.__time_due, self.__students, self.__student_filename, self.__initial_path)
-        except: # Catch exception raised by clone_repo and interrupt main thread
+        try:            
+            # If no commits, skip repo
+            try:
+                num_commits = len(list(self.__repo.get_commits()))
+            except:
+                print(f'{LIGHT_RED}Skipping {self.__repo.name}. It has 0 commits.{WHITE}')
+                logging.warning(f'Skipping repo `{self.__repo.name}` because it has 0 commits.')
+                return
+
+            self.clone_repo()
+            self.checkout_repo()
+            self.get_repo_stats()
+        except: # Catch exception raised and interrupt main thread
             print(f'ERROR: Sorry, ran into a problem while cloning `{self.__repo.name}`. Check {LOG_FILE_PATH}.')
             logging.exception('ERROR:')
-            _thread.interrupt_main()            
+            _thread.interrupt_main()         
+
+    '''
+    Clones a repo into the assignment folder.
+    '''
+    def clone_repo(self):
+        print(f'Cloning {self.__repo.name} into {self.__repo_path}...')
+        clone_process = subprocess.Popen(f'git clone {self.__repo.clone_url} "{str(self.__repo_path)}"', stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # git clone to output file, Hides output from console
+        self.log_errors_given_subprocess(clone_process)
+
+
+    '''
+    Get commit hash at timestamp and reset local repo to timestamp on the default branch (git rev-list output piped to git checkout)
+    '''
+    def checkout_repo(self):
+        rev_list_checkout_process = subprocess.Popen(f'git rev-list -n 1 --before="{self.__date_due.strip()} {self.__time_due.strip()}" origin/{self.__repo.default_branch} | git checkout', cwd=self.__repo_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.log_errors_given_subprocess(rev_list_checkout_process)
+
+
+    '''
+    Get commit history stats and find average number of insertions per commit
+    '''
+    def get_repo_stats(self):
+        # Get commit history stats
+        log_process = subprocess.Popen(f'git log --oneline --shortstat', cwd=self.__repo_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # Loop through response line by line
+        repo_stats = []
+        with log_process:
+            for line in iter(log_process.stdout.readline, b''): # b'\n'-separated lines
+                line = str(line)
+                self.log_errors_given_line(line)
+                if 'file' in line and 'change' in line:
+                    # put all commit stats into list 
+                    # [0] = files changed
+                    # [1] = insertions
+                    # [2] = deletions (if any, might not be an index)
+                    repo_stats.append([re.sub(r'\D', '', value) for value in line.strip().split(', ')])
+
+        total_commits = len(repo_stats)
+        total_insertions = 0
+        # Loop through repos stats and find total number of insertions
+        for i in range(total_commits):
+            insertions = int(repo_stats[i][1])
+            total_insertions += insertions
+        
+        # Calc avg and place in global dictionary using maped repo name if student roster is provided or normal repo name
+        average_insertions = round(total_insertions / total_commits, 2)
+        if self.__student_filename:
+            AVG_INSERTIONS_DICT[get_new_repo_name(self.__repo, self.__students, self.__assignment_name)] = average_insertions
+        else:
+            AVG_INSERTIONS_DICT[self.__repo.name] = average_insertions
+
+
+    '''
+    Reads full git command output of a subprocess and raises exception & logs if error is found
+    '''
+    def log_errors_given_subprocess(self, subprocess: subprocess):
+        with subprocess:
+            for line in iter(subprocess.stdout.readline, b''): # b'\n'-separated lines
+                line = str(line)
+                if 'fatal' in line.lower() or 'error' in line.lower() or 'warning' in line.lower(): # if git command threw error (usually wrong branch name)
+                    logging.info('Subprocess: %r', line) # Log error
+                    raise Exception(f'An error has with git.') # Raise exception to the thread
+
+    
+    '''
+    Given 1 line of git command output, check if error.
+    If so, log it and raise exception
+    '''
+    def log_errors_given_line(self, line: str):
+        if 'fatal' in line.lower() or 'error' in line.lower() or 'warning' in line.lower(): # if git command threw error (usually wrong branch name)
+            logging.info('Subprocess: %r', line) # Log error
+            raise Exception(f'An error has with git.') # Raise exception to the thread
 
 
 '''
@@ -234,69 +320,6 @@ def make_default_config():
 
 
 '''
-Clones a repo into the assignment folder.
-If a classroom roster is used, replace github names with real names
-'''
-def clone_repo(repo, assignment_name, date_due, time_due, students, use_students, initial_path):
-    if use_students: # If student file was input
-        path = initial_path / get_new_repo_name(repo, students, assignment_name) # replace repo name when cloning to have student's real name
-    else:
-        path = initial_path / repo.name
-    
-    # If no commits, skip repo
-    try:
-        num_commits = len(list(repo.get_commits()))
-    except:
-        print(f'{LIGHT_RED}Skipping {repo.name}. It has 0 commits.{WHITE}')
-        logging.warning(f'Skipping repo `{repo.name}` because it has 0 commits.')
-        return
-
-    # Clone repo
-    print(f'Cloning {repo.name} into {path}...')
-    subprocess.run(f'git clone {repo.clone_url} "{str(path)}"', stderr=subprocess.PIPE) # git clone to output file, Hides output from console
-    # Get commit hash at timestamp and reset local repo to timestamp on the default branch (git rev-list output piped to git checkout)
-    rev_list_process = subprocess.Popen(f'git rev-list -n 1 --before="{date_due.strip()} {time_due.strip()}" origin/{repo.default_branch} | git checkout', cwd=path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    # Check command response for errors and log them.
-    with rev_list_process:
-        for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
-            line = str(line)
-            if 'fatal' in line.lower() or 'error' in line.lower(): # if git command threw error (usually wrong branch name)
-                logging.info('Subprocess: %r', line) # Log error
-                raise Exception(f'An error has with git.') # Raise exception to the thread
-    
-    # Get commit history stats and find average number of insertions per commit
-    log_process = subprocess.Popen(f'git log --oneline --shortstat', cwd=path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    # Loop through response line by line
-    repo_stats = []
-    with log_process:
-        for line in iter(log_process.stdout.readline, b''): # b'\n'-separated lines
-            line = str(line)
-            if 'fatal' in line.lower() or 'error' in line.lower(): # if git command threw error (usually wrong branch name)
-                logging.info('Subprocess: %r', line) # Log error
-                raise Exception(f'An error has with git.') # Raise exception to the thread
-            elif 'file' in line and 'change' in line:
-                # put all commit stats into list 
-                # [0] = files changed
-                # [1] = insertions
-                # [2] = deletions (if any, might not be an index)
-                repo_stats.append([re.sub(r'\D', '', value) for value in line.strip().split(', ')])
-
-    total_commits = len(repo_stats)
-    total_insertions = 0
-    # Loop through repos stats and find total number of insertions
-    for i in range(total_commits):
-        insertions = int(repo_stats[i][1])
-        total_insertions += insertions
-    
-    # Calc avg and place in global dictionary using maped repo name if student roster is provided or normal repo name
-    average_insertions = round(total_insertions / total_commits, 2)
-    if use_students:
-        AVG_INSERTIONS_DICT[get_new_repo_name(repo, students, assignment_name)] = average_insertions
-    else:
-        AVG_INSERTIONS_DICT[repo.name] = average_insertions
-
-
-'''
 Check that git version is above min requirements for script
 '''
 def check_git_version():
@@ -366,7 +389,7 @@ def main():
         # goes through list of repos and clones them into the assignment's parent folder
         for repo in repos:
             # Create thread that clones repo and add to thread list
-            thread = CloneRepoThread(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path)
+            thread = RepoHandler(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path)
             threads += [thread]
 
         # Run all clone threads
