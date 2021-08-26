@@ -32,7 +32,7 @@ AVG_INSERTIONS_DICT = dict()
 
 
 '''
-A Thread that clone a repo, resets it to specific time, and gets average number of lines per commit
+A Thread that clones a repo, resets it to specific time, and gets average number of lines per commit
 '''
 class RepoHandler(Thread):
     __slots___ = ['__repo', '__assignment_name', '__date_due', '__time_due', '__students', '__student_filename', '__initial_path', '__repo_path']
