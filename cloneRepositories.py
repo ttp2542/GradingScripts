@@ -15,9 +15,10 @@ from threading import Thread
 from github.Repository import Repository
 '''
 Script to clone all or some repositories in a Github Organization based on repo prefix and usernames
-@author Kamron Cole kjc8084@rit.edu
+@authors  Kamron Cole kjc8084@rit.edu, Trey Pachucki ttp2542@g.rit.edu
 '''
-CONFIG_PATH = 'tmp/config.txt' # Stores token and org name
+AVERAGE_LINES_FILENAME = 'avgLinesInserted.txt'
+CONFIG_PATH = 'tmp/config.txt' # Stores token, org name, save class roster bool, class roster path, output dir
 BASE_GITHUB_LINK = 'https://github.com'
 MIN_GIT_VERSION = 2.30
 MAX_THREADS = 200
@@ -25,6 +26,7 @@ LOG_FILE_PATH = 'tmp/logs.log'
 LIGHT_GREEN = '\033[1;32m'
 LIGHT_RED = '\033[1;31m'
 WHITE = '\033[0m'
+AVG_INSERTIONS_DICT = dict()
 
 
 '''
@@ -254,12 +256,44 @@ def clone_repo(repo, assignment_name, date_due, time_due, students, use_students
     subprocess.run(f'git clone {repo.clone_url} "{str(path)}"', stderr=subprocess.PIPE) # git clone to output file, Hides output from console
     # Get commit hash at timestamp and reset local repo to timestamp on the default branch (git rev-list output piped to git checkout)
     rev_list_process = subprocess.Popen(f'git rev-list -n 1 --before="{date_due.strip()} {time_due.strip()}" origin/{repo.default_branch} | git checkout', cwd=path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    with rev_list_process: # Output command response to log file
+    # Check command response for errors and log them.
+    with rev_list_process:
         for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
             line = str(line)
             if 'fatal' in line.lower() or 'error' in line.lower(): # if git command threw error (usually wrong branch name)
                 logging.info('Subprocess: %r', line) # Log error
                 raise Exception(f'An error has with git.') # Raise exception to the thread
+    
+    # Get commit history stats and find average number of insertions per commit
+    log_process = subprocess.Popen(f'git log --oneline --shortstat', cwd=path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # Loop through response line by line
+    repo_stats = []
+    with log_process:
+        for line in iter(log_process.stdout.readline, b''): # b'\n'-separated lines
+            line = str(line)
+            if 'fatal' in line.lower() or 'error' in line.lower(): # if git command threw error (usually wrong branch name)
+                logging.info('Subprocess: %r', line) # Log error
+                raise Exception(f'An error has with git.') # Raise exception to the thread
+            elif 'file' in line and 'change' in line:
+                # put all commit stats into list 
+                # [0] = files changed
+                # [1] = insertions
+                # [2] = deletions (if any, might not be an index)
+                repo_stats.append([re.sub(r'\D', '', value) for value in line.strip().split(', ')])
+
+    total_commits = len(repo_stats)
+    total_insertions = 0
+    # Loop through repos stats and find total number of insertions
+    for i in range(total_commits):
+        insertions = int(repo_stats[i][1])
+        total_insertions += insertions
+    
+    # Calc avg and place in global dictionary using maped repo name if student roster is provided or normal repo name
+    average_insertions = round(total_insertions / total_commits, 2)
+    if use_students:
+        AVG_INSERTIONS_DICT[get_new_repo_name(repo, students, assignment_name)] = average_insertions
+    else:
+        AVG_INSERTIONS_DICT[repo.name] = average_insertions
 
 
 '''
@@ -269,6 +303,16 @@ def check_git_version():
     git_version = str(subprocess.check_output('git --version', stderr=subprocess.PIPE))[14:18]
     if float(git_version) < MIN_GIT_VERSION:
         raise ValueError('Incompatible git version.')
+
+
+'''
+Loop through average insertions dict created by CloneRepoThreads and write to file in assignment dir
+'''
+def write_avg_insersions_file(initial_path, assignment_name):
+    with open(initial_path / AVERAGE_LINES_FILENAME, 'w') as avgLinesFile:
+        avgLinesFile.write(f'{assignment_name}\n\n')
+        for repo_name in AVG_INSERTIONS_DICT:
+            avgLinesFile.write(f'{repo_name.replace(f"{assignment_name}-", "").replace("-", ", ")}\n    Average Insertions: {AVG_INSERTIONS_DICT[repo_name]}\n\n')
 
 
 '''
@@ -323,7 +367,6 @@ def main():
         for repo in repos:
             # Create thread that clones repo and add to thread list
             thread = CloneRepoThread(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path)
-            thread.setDaemon(True)
             threads += [thread]
 
         # Run all clone threads
@@ -333,6 +376,7 @@ def main():
         for thread in threads:
             thread.join()
 
+        write_avg_insersions_file(initial_path, assignment_name)
         print()
         print(f'{LIGHT_GREEN}Done.{WHITE}')
         print(f'{LIGHT_GREEN}Cloned {len(next(os.walk(initial_path))[1])}/{len(repos)} repos.{WHITE}')
