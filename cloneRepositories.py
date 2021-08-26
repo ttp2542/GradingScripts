@@ -70,8 +70,8 @@ class RepoHandler(Thread):
             self.checkout_repo()
             self.get_repo_stats()
         except IndexError as e: # Catch exception raised by get_repo_stats
-                print(f'{LIGHT_RED}Error finding average lines per commit for `{self.__repo.name}` because a commit message to too similar to `git history` output.{WHITE}')
-                logging.warning(f'Error finding average lines per commit for `{self.__repo.name}` because a commit message to too similar to `git history` output.')
+                print(f'{LIGHT_RED}IndexError while finding average lines per commit for `{self.__repo.name}`.{WHITE}')
+                logging.warning(f'IndexError while finding average lines per commit for `{self.__repo.name}`.')
         except: # Catch exception raised and interrupt main thread
             print(f'ERROR: Sorry, ran into a problem while cloning `{self.__repo.name}`. Check {LOG_FILE_PATH}.')
             logging.exception('ERROR:')
@@ -106,7 +106,7 @@ class RepoHandler(Thread):
             for line in iter(log_process.stdout.readline, b''): # b'\n'-separated lines
                 line = str(line)
                 self.log_errors_given_line(line)
-                if ('file changed,' in line or 'files changed,' in line) and ('insertions(+)' in line or 'insertion(+)' in line):
+                if (re.match(r"b'\s\d+\sfile.*changed,\s\d+\sinsertion.*[(+)].*[\n']", line)):
                     # put all commit stats into list 
                     # [0] = files changed
                     # [1] = insertions
@@ -120,9 +120,9 @@ class RepoHandler(Thread):
             for i in range(total_commits):
                 insertions = int(repo_stats[i][1])
                 total_insertions += insertions
-        except IndexError:
-            raise IndexError('Someones commit message is very similar to git history output...')
-        
+        except IndexError as e:
+            raise e
+
         # Calc avg and place in global dictionary using maped repo name if student roster is provided or normal repo name
         average_insertions = round(total_insertions / total_commits, 2)
         if self.__student_filename:
