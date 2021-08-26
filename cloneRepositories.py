@@ -103,7 +103,7 @@ class RepoHandler(Thread):
             for line in iter(log_process.stdout.readline, b''): # b'\n'-separated lines
                 line = str(line)
                 self.log_errors_given_line(line)
-                if 'file' in line and 'change' in line:
+                if 'changed,' in line and 'insertions(+)':
                     # put all commit stats into list 
                     # [0] = files changed
                     # [1] = insertions
@@ -362,86 +362,82 @@ def main():
     logging.basicConfig(level=logging.INFO, filename=LOG_FILE_PATH)
 
     # Try catch catches errors and sends them to the log file instead of outputting to console
-    #try:
+    try:
+        # Check local git version is compatible with script
+        check_git_version()
+        # Check local PyGithub module version is compatible with script
+        check_pygithub_version()
+        # Read config file, if doesn't exist make one using user input.
+        token, organization, student_filename, output_dir = read_config()
 
+        # Create Organization to access repos
+        git_org_client = Github(token.strip(), pool_size = MAX_THREADS).get_organization(organization.strip())
 
-    # Check local git version is compatible with script
-    check_git_version()
-    # Check local PyGithub module version is compatible with script
-    # check_pygithub_version()
-    # Read config file, if doesn't exist make one using user input.
-    token, organization, student_filename, output_dir = read_config()
+        # Variables used to get proper repos
+        assignment_name = input('Assignment Name: ')
+        date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ')
+        if not date_due:
+            current_date = date.today()
+            date_due = current_date.strftime('%Y-%m-%d')
+            print(f'Using current date: {date_due}')
+        time_due = input('Time Due (24hr, press `enter` for current): ')
+        if not time_due:
+            current_time = datetime.now()
+            time_due = current_time.strftime('%H:%M')
+            print(f'Using current date: {time_due}')
+        print()
 
-    # Create Organization to access repos
-    git_org_client = Github(token.strip(), pool_size = MAX_THREADS).get_organization(organization.strip())
+        # If student roster is specified, get repos list using proper function
+        students = dict()
+        if student_filename:
+            students = get_students(student_filename)
+            repos = get_repos_specified_students(assignment_name, git_org_client, students)
+        else:
+            repos = get_repos(assignment_name, git_org_client)
 
-    # Variables used to get proper repos
-    assignment_name = input('Assignment Name: ')
-    date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ')
-    if not date_due:
-        current_date = date.today()
-        date_due = current_date.strftime('%Y-%m-%d')
-        print(f'Using current date: {date_due}')
-    time_due = input('Time Due (24hr, press `enter` for current): ')
-    if not time_due:
-        current_time = datetime.now()
-        time_due = current_time.strftime('%H:%M')
-        print(f'Using current date: {time_due}')
-    print()
+        # Sets path to same as the script
+        initial_path = output_dir / assignment_name
 
-    # If student roster is specified, get repos list using proper function
-    students = dict()
-    if student_filename:
-        students = get_students(student_filename)
-        repos = get_repos_specified_students(assignment_name, git_org_client, students)
-    else:
-        repos = get_repos(assignment_name, git_org_client)
+        # Makes parent folder for whole assignment
+        file_exists_handler(initial_path)
 
-    # Sets path to same as the script
-    initial_path = output_dir / assignment_name
+        threads = []
+        # goes through list of repos and clones them into the assignment's parent folder
+        for repo in repos:
+            # Create thread that clones repo and add to thread list
+            thread = RepoHandler(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path)
+            threads += [thread]
 
-    # Makes parent folder for whole assignment
-    file_exists_handler(initial_path)
+        # Run all clone threads
+        for thread in threads:
+            thread.start()
 
-    threads = []
-    # goes through list of repos and clones them into the assignment's parent folder
-    for repo in repos:
-        # Create thread that clones repo and add to thread list
-        thread = RepoHandler(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path)
-        threads += [thread]
+        for thread in threads:
+            thread.join()
 
-    # Run all clone threads
-    for thread in threads:
-        thread.start()
-
-    for thread in threads:
-        thread.join()
-
-    write_avg_insersions_file(initial_path, assignment_name)
-    print()
-    print(f'{LIGHT_GREEN}Done.{WHITE}')
-    print(f'{LIGHT_GREEN}Cloned {len(next(os.walk(initial_path))[1])}/{len(repos)} repos.{WHITE}')
-
-
-    # except FileNotFoundError as e:
-    #     print()
-    #     print(f'Classroom roster `{student_filename}` not found.')
-    #     logging.error(e)
-    # except FileExistsError as e: # Error thrown if parent assignment file already exists
-    #     print()
-    #     print(f'ERROR: File `{initial_path}` already exists, please delete it and run again')
-    #     logging.error(e)
-    # except KeyboardInterrupt as e: # When thread fails because subprocess command threw some error/exception
-    #     print()
-    #     print('ERROR: Something happened during the cloning process; your repos are not at the proper timestamp. Delete the assignment folder and run again.')
-    #     logging.error(e)
-    # except ValueError as e: # When git version is incompatible w/ script
-    #     print()
-    #     print(e)
-    #     logging.error(e)
-    # except Exception as e:
-    #     print(f'ERROR: Something happened. Check {LOG_FILE_PATH}')
-    #     logging.error(e)
+        write_avg_insersions_file(initial_path, assignment_name)
+        print()
+        print(f'{LIGHT_GREEN}Done.{WHITE}')
+        print(f'{LIGHT_GREEN}Cloned {len(next(os.walk(initial_path))[1])}/{len(repos)} repos.{WHITE}')
+    except FileNotFoundError as e:
+        print()
+        print(f'Classroom roster `{student_filename}` not found.')
+        logging.error(e)
+    except FileExistsError as e: # Error thrown if parent assignment file already exists
+        print()
+        print(f'ERROR: File `{initial_path}` already exists, please delete it and run again')
+        logging.error(e)
+    except KeyboardInterrupt as e: # When thread fails because subprocess command threw some error/exception
+        print()
+        print('ERROR: Something happened during the cloning process; your repos are not at the proper timestamp. Delete the assignment folder and run again.')
+        logging.error(e)
+    except ValueError as e: # When git version is incompatible w/ script
+        print()
+        print(e)
+        logging.error(e)
+    except Exception as e:
+        print(f'ERROR: Something happened. Check {LOG_FILE_PATH}')
+        logging.error(e)
     exit()
 
 
