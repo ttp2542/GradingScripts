@@ -356,10 +356,12 @@ Loop through average insertions dict created by CloneRepoThreads and write to fi
 '''
 def write_avg_insersions_file(initial_path, assignment_name):
     num_of_lines = 0
+    local_dict = AVG_INSERTIONS_DICT
+    local_dict = dict(sorted(local_dict.items(), key=lambda item: item[0]))
     with open(initial_path / AVERAGE_LINES_FILENAME, 'w') as avgLinesFile:
         avgLinesFile.write(f'{assignment_name}\n\n')
-        for repo_name in AVG_INSERTIONS_DICT:
-            avgLinesFile.write(f'{repo_name.replace(f"{assignment_name}-", "").replace("-", ", ")}\n    Average Insertions: {AVG_INSERTIONS_DICT[repo_name]}\n\n')
+        for repo_name in local_dict:
+            avgLinesFile.write(f'{repo_name.replace(f"{assignment_name}-", "").replace("-", ", ")}\n    Average Insertions: {local_dict[repo_name]}\n\n')
             num_of_lines += 1
     return num_of_lines
 
