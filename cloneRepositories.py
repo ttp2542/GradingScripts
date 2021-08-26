@@ -62,13 +62,16 @@ class RepoHandler(Thread):
             try:
                 num_commits = len(list(self.__repo.get_commits()))
             except:
-                print(f'{LIGHT_RED}Skipping {self.__repo.name}. It has 0 commits.{WHITE}')
+                print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because it has 0 commits.{WHITE}')
                 logging.warning(f'Skipping repo `{self.__repo.name}` because it has 0 commits.')
                 return
 
             self.clone_repo()
             self.checkout_repo()
             self.get_repo_stats()
+        except IndexError as e: # Catch exception raised by get_repo_stats
+                print(f'{LIGHT_RED}Error finding average lines per commit for `{self.__repo.name}` because a commit message to too similar to `git history` output.{WHITE}')
+                logging.warning(f'Error finding average lines per commit for `{self.__repo.name}` because a commit message to too similar to `git history` output.')
         except: # Catch exception raised and interrupt main thread
             print(f'ERROR: Sorry, ran into a problem while cloning `{self.__repo.name}`. Check {LOG_FILE_PATH}.')
             logging.exception('ERROR:')
@@ -110,12 +113,15 @@ class RepoHandler(Thread):
                     # [2] = deletions (if any, might not be an index)
                     repo_stats.append([re.sub(r'\D', '', value) for value in line.strip().split(', ')])
 
-        total_commits = len(repo_stats)
-        total_insertions = 0
-        # Loop through repos stats and find total number of insertions
-        for i in range(total_commits):
-            insertions = int(repo_stats[i][1])
-            total_insertions += insertions
+        try:
+            total_commits = len(repo_stats)
+            total_insertions = 0
+            # Loop through repos stats and find total number of insertions
+            for i in range(total_commits):
+                insertions = int(repo_stats[i][1])
+                total_insertions += insertions
+        except IndexError:
+            raise IndexError('Someones commit message is very similar to git history output...')
         
         # Calc avg and place in global dictionary using maped repo name if student roster is provided or normal repo name
         average_insertions = round(total_insertions / total_commits, 2)
@@ -323,7 +329,7 @@ def make_default_config():
 
 
 '''
-Check that git version is above min requirements for script
+Check that git version is at or above min requirements for script
 '''
 def check_git_version():
     git_version = str(subprocess.check_output('git --version', stderr=subprocess.PIPE))[14:18]
@@ -331,6 +337,9 @@ def check_git_version():
         raise ValueError(f'Your version of git is not compatible with this script. Use version {MIN_GIT_VERSION}+.')
 
 
+'''
+Check that PyGithub version is at or above min requirements for script
+'''
 def check_pygithub_version():
     version = 0.0
     check_pygithub_version_process = subprocess.Popen('pip show pygithub', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -346,10 +355,13 @@ def check_pygithub_version():
 Loop through average insertions dict created by CloneRepoThreads and write to file in assignment dir
 '''
 def write_avg_insersions_file(initial_path, assignment_name):
+    num_of_lines = 0
     with open(initial_path / AVERAGE_LINES_FILENAME, 'w') as avgLinesFile:
         avgLinesFile.write(f'{assignment_name}\n\n')
         for repo_name in AVG_INSERTIONS_DICT:
             avgLinesFile.write(f'{repo_name.replace(f"{assignment_name}-", "").replace("-", ", ")}\n    Average Insertions: {AVG_INSERTIONS_DICT[repo_name]}\n\n')
+            num_of_lines += 1
+    return num_of_lines
 
 
 '''
@@ -375,6 +387,8 @@ def main():
 
         # Variables used to get proper repos
         assignment_name = input('Assignment Name: ')
+        while not assignment_name:
+            assignment_name = input('Please input an assignment name: ')
         date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ')
         if not date_due:
             current_date = date.today()
@@ -415,10 +429,11 @@ def main():
         for thread in threads:
             thread.join()
 
-        write_avg_insersions_file(initial_path, assignment_name)
+        num_of_lines = write_avg_insersions_file(initial_path, assignment_name)
         print()
         print(f'{LIGHT_GREEN}Done.{WHITE}')
         print(f'{LIGHT_GREEN}Cloned {len(next(os.walk(initial_path))[1])}/{len(repos)} repos.{WHITE}')
+        print(f'{LIGHT_GREEN}Found average lines per commit for {num_of_lines}/{len(repos)} repos.{WHITE}')
     except FileNotFoundError as e:
         print()
         print(f'Classroom roster `{student_filename}` not found.')
