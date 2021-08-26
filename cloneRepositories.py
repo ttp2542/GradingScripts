@@ -128,7 +128,7 @@ def opener(file_name: str) -> bool:
 Attempts to remove file if it already exists attempt to remove it, if not exit with an error. If it doesn't exist, create it.
 '''
 def file_exists_handler(path):
-    if Path.exists(path):
+    if Path.is_dir(path):
         try:
             shutil.rmtree(path)
             Path.mkdir(path)
@@ -141,15 +141,17 @@ def file_exists_handler(path):
 '''
 Save parameters into config file to be read on future runs
 '''
-def save_config(token: str, organization: Organization, use_classlist: bool, student_filename: str):
+def save_config(token: str, organization: Organization, use_classlist: bool, student_filename: str, output_dir: Path):
     with open(CONFIG_PATH, 'w') as config:
-        config.write(token)
+        config.write(f'Token: {token}')
         config.write('\n')
-        config.write(organization)
+        config.write(f'Organization: {organization}')
         config.write('\n')
-        config.write(str(use_classlist))
+        config.write(f'Save Classroom Roster: {str(use_classlist)}')
         config.write('\n')
-        config.write(student_filename)
+        config.write(f'Classroom Roster Path: {student_filename}')
+        config.write('\n')
+        config.write(f'Output Directory: {str(output_dir)}')
 
 
 '''
@@ -161,17 +163,19 @@ def read_config_raw() -> tuple:
     organization = ''
     use_classlist = ''
     student_filename = ''
+    output_dir = ''
     if opener(CONFIG_PATH):
         with open(CONFIG_PATH, 'r') as config:
-            token = config.readline().strip()
-            organization = config.readline().strip()
-            use_classlist = config.readline().strip()
+            token = config.readline().strip().split(': ')[1]
+            organization = config.readline().strip().split(': ')[1]
+            use_classlist = config.readline().strip().split(': ')[1]
             if use_classlist == 'True':
                 use_classlist = True
-                student_filename = config.readline().strip()
+                student_filename = config.readline().strip().split(': ')[1]
             elif use_classlist == 'False':
                 use_classlist = False
-    return (token, organization, use_classlist, student_filename)
+            output_dir = Path(config.readline().strip().split(': ')[1])
+    return (token, organization, use_classlist, student_filename, output_dir)
 
 
 '''
@@ -179,7 +183,7 @@ Checks whether config already exists, if so and use_classlist is False, ask for 
 '''
 def read_config() -> tuple:
     if opener(CONFIG_PATH): # If config already exists
-        token, organization, use_classlist, student_filename = read_config_raw() # get variables
+        token, organization, use_classlist, student_filename, output_dir = read_config_raw() # get variables
         if use_classlist == False:
             print('OPTIONAL: Enter filename of csv file containing username and name of students. To ignore, just hit `enter`')
             student_filename = input('If ignored, repo names will not be changed to match student names: ')
@@ -192,11 +196,11 @@ def read_config() -> tuple:
                     use_classlist = 'False'
             else:
                 use_classlist = 'False'
-            save_config(token, organization, use_classlist, student_filename)
+            save_config(token, organization, use_classlist, student_filename, output_dir)
     else:
         make_default_config()
-        token, organization, use_classlist, student_filename = read_config_raw() # Update return variables
-    return (token, organization, student_filename)
+        token, organization, use_classlist, student_filename, output_dir = read_config_raw() # Update return variables
+    return (token, organization, student_filename, output_dir)
 
 
 '''
@@ -218,7 +222,13 @@ def make_default_config():
             use_classlist = 'False'
     else:
         use_classlist = 'False'
-    save_config(token, organization, use_classlist, student_filename)
+    output_dir = Path(input('Output directory for assignment files (`enter` for current directory): '))
+    if not output_dir:
+        output_dir = Path.cwd()
+    while not Path.is_dir(output_dir):
+        print(f'Directory `{output_dir}` not found.')
+        output_dir = Path(input('Output directory for assignment files (`enter` for current directory): '))
+    save_config(token, organization, use_classlist, student_filename, output_dir)
 
 
 '''
@@ -275,7 +285,7 @@ def main():
         # Check local git version is compatible with script
         check_git_version()
         # Read config file, if doesn't exist make one using user input.
-        token, organization, student_filename = read_config()
+        token, organization, student_filename, output_dir = read_config()
 
         # Create Organization to access repos
         git_org_client = Github(token.strip(), pool_size = MAX_THREADS).get_organization(organization.strip())
@@ -303,7 +313,7 @@ def main():
             repos = get_repos(assignment_name, git_org_client)
 
         # Sets path to same as the script
-        initial_path = Path.cwd() / assignment_name
+        initial_path = output_dir / assignment_name
 
         # Makes parent folder for whole assignment
         file_exists_handler(initial_path)
