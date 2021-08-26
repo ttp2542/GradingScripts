@@ -7,15 +7,11 @@ Welcome to the GradingScripts, home of all the scripts needed to grade the class
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before we get started with other things, let’s make sure you have installed what you need to actually run the scripts. In order to make life easier, we’re going to first start out with a tool called pip. If you installed Python, pip should already be on your computer, but in case it isn’t, go to this link and follow the instructions: https://pip.pypa.io/en/stable/installing/. It’s ok. I’ll wait for you to get back.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By now you should have pip (yay!). That means you’re on your way to being able to run the scripts at all! Now the next step is really easy. Now that you have pip, you just need to use it to install 3 packages that the scripts require. Those commands are as follows:
-
->pip install gitpython
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By now you should have pip (yay!). That means you’re on your way to being able to run the scripts at all! Now the next step is really easy. Now that you have pip, you just need to use it to install 1 package that the scripts require. Those command is as follows:
 
 >pip install PyGithub
 
->pip install pygithub3
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now that you have all the packages installed you can now run the scripts, huzzah! But wait, what’s this information you need? It doesn’t just work? Blasphemy!
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now that you have the package installed you can now run the scripts, huzzah! But wait, what’s this information you need? It doesn’t just work? Blasphemy!
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, that’s what we’re going over next, what you should have access to for grading. We have 4 main scripts, each of which also includes a .bat file that can be used to run the script. There’s one file not listed here, called temp.txt. This text file will be created upon using any of these scripts for the first time and is used for storing information that should be consistent across the semester, primarily your Github Authentication token and the Github Organization name.
 

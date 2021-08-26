@@ -1,7 +1,7 @@
-from pathlib import Path
-import os
 import csv
+import os
 
+from pathlib import Path
 """
 This script is meant to rename all the cloned repositories to be the
 students real names (instead of their github usernames). It uses a classlist

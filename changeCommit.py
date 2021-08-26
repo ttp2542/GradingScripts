@@ -1,9 +1,8 @@
-import git
 import os
-from pygithub3 import Github
 import re
-from pathlib import Path
 
+from github import Github
+from pathlib import Path
 """
 This script changes the commit head of a previously cloned repository.
 
