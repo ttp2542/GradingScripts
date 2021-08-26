@@ -22,9 +22,9 @@ BASE_GITHUB_LINK = 'https://github.com'
 MIN_GIT_VERSION = 2.30
 MAX_THREADS = 200
 LOG_FILE_PATH = 'tmp/logs.log'
-RED = '\033[0;31m'
-WHITE = '\033[0m'
 LIGHT_GREEN = '\033[1;32m'
+LIGHT_RED = '\033[1;31m'
+WHITE = '\033[0m'
 
 
 '''
@@ -42,6 +42,7 @@ class CloneRepoThread(Thread):
         self.__students = students
         self.__student_filename = student_filename
         self.__initial_path = initial_path
+        self.setDaemon = True
         super().__init__()
 
 
@@ -235,7 +236,7 @@ def clone_repo(repo, assignment_name, date_due, time_due, students, use_students
     try:
         num_commits = len(list(repo.get_commits()))
     except:
-        print(f'{RED}Skipping {repo.name}. It has 0 commits.{WHITE}')
+        print(f'{LIGHT_RED}Skipping {repo.name}. It has 0 commits.{WHITE}')
         logging.warning(f'Skipping repo `{repo.name}` because it has 0 commits.')
         return
 
@@ -265,6 +266,8 @@ def check_git_version():
 Main function
 '''
 def main():
+    # Enable color in cmd
+    os.system('color')
     # Create log file
     logging.basicConfig(level=logging.INFO, filename=LOG_FILE_PATH)
 
@@ -311,7 +314,6 @@ def main():
         for repo in repos:
             # Create thread that clones repo and add to thread list
             thread = CloneRepoThread(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path)
-            thread.setDaemon(True)
             threads += [thread]
 
         # Run all clone threads
@@ -334,7 +336,7 @@ def main():
         logging.error(e)
     except KeyboardInterrupt as e: # When thread fails because subprocess command threw some error/exception
         print()
-        print('ERROR: Something happened during the cloning process; your repos are not at the proper timestamp. Delete the assignment folder and run again.')
+        print('ERROR: Main thread was interrupted. Your repos are not at the proper timestamp. Delete the assignment folder and run again.')
         logging.error(e)
     except ValueError as e: # When git version is incompatible w/ script
         print()
