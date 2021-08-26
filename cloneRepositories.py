@@ -351,6 +351,7 @@ def check_pygithub_version():
         if version < MIN_PYGITHUB_VERSION:
             raise ValueError(f'Incompatible PyGithub version. Use version {MIN_PYGITHUB_VERSION}+. Use `pip install PyGithub --upgrade` to update')
 
+
 '''
 Loop through average insertions dict created by CloneRepoThreads and write to file in assignment dir
 '''
