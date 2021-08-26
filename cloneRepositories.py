@@ -106,7 +106,7 @@ class RepoHandler(Thread):
             for line in iter(log_process.stdout.readline, b''): # b'\n'-separated lines
                 line = str(line)
                 self.log_errors_given_line(line)
-                if 'changed,' in line and 'insertions(+)':
+                if ('file changed,' in line or 'files changed,' in line) and ('insertions(+)' in line or 'insertion(+)' in line):
                     # put all commit stats into list 
                     # [0] = files changed
                     # [1] = insertions
