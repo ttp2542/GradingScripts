@@ -1,7 +1,4 @@
-from io import StringIO
-from pathlib import Path
 import csv
-import github
 import logging
 import os
 import re
@@ -13,6 +10,7 @@ from datetime import date, datetime
 from github import Github
 from github.Organization import Organization
 from github.Repository import Repository
+from pathlib import Path
 from threading import Thread
 '''
 Script to clone all or some repositories in a Github Organization based on repo prefix and usernames
