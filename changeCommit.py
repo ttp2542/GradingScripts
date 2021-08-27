@@ -1,122 +1,52 @@
 import os
-import logging
-import cloneRepositories
+import re
 
-from datetime import date, datetime
-from threading import Thread
+from github import Github
 from pathlib import Path
 """
 This script changes the commit head of a previously cloned repository.
 
-@author Trey Pachucki ttp2542@g.rit.edu, Kamron Cole kjc8084@rit.edu
+@author Trey Pachucki ttp2542@g.rit.edu
 """
-CONFIG_PATH = cloneRepositories.CONFIG_PATH
-LOG_FILE_PATH = cloneRepositories.LOG_FILE_PATH
-MIN_GIT_VERSION = cloneRepositories.MIN_GIT_VERSION
 
-class Checkout(Thread):
-    __slots__ = ['__repo', '__date_due', '__time_due', '__repo_path']
-
-    def __init__(self):
-        super().__init__()
+GITHUB_LINK = 'https://github.com/'
+TEMP_FILE_NAME = 'temp.txt'
+FIRST_HALF_GIT_REV_LIST = 'git rev-list -n 1 --before="'
+SECOND_HALF_GIT_REV_LIST = '" origin/main'
 
 
 def main():
-    # Enable color in cmd
-    os.system('color')
-    # Create log file
-    logging.basicConfig(level=logging.INFO, filename=LOG_FILE_PATH)
-
-        # Try catch catches errors and sends them to the log file instead of outputting to console
+    # if this script has been run before use the past information
     try:
-        # Check local git version is compatible with script
-        check_git_version()
-        # Check local PyGithub module version is compatible with script
-        check_pygithub_version()
-        # Read config file, if doesn't exist make one using user input.
-        token, organization, student_filename, output_dir = read_config()
+        file = open(TEMP_FILE_NAME, 'r')
+        token = file.readline()
+        organization = file.readline()
 
-        # Create Organization to access repos
-        git_org_client = Github(token.strip(), pool_size = MAX_THREADS).get_organization(organization.strip())
+    # otherwise get the information from the user
+    except FileNotFoundError:
+        file = open(TEMP_FILE_NAME, 'w')
+        token = input("Please input your Github Authentication Token: ")
+        organization = input("Please input the organization name: ")
 
-        # Variables used to get proper repos
-        assignment_name = input('Assignment Name: ')
-        while not assignment_name:
-            assignment_name = input('Please input an assignment name: ')
-        date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ')
-        if not date_due:
-            current_date = date.today()
-            date_due = current_date.strftime('%Y-%m-%d')
-            print(f'Using current date: {date_due}')
-        time_due = input('Time Due (24hr, press `enter` for current): ')
-        if not time_due:
-            current_time = datetime.now()
-            time_due = current_time.strftime('%H:%M')
-            print(f'Using current date: {time_due}')
-        print()
+        # write to the file for future ease of use
+        file.write(token)
+        file.write('\n')
+        file.write(organization)
 
-        # Sets path to same as the script
-        initial_path = output_dir / assignment_name
+    file.close()
 
-        # Makes sure assignments are cloned
-        
-        num_of_repos = len(next(os.walk(initial_path))[1])
-        
-        threads = []
-        # goes through list of repos and clones them into the assignment's parent folder
-        for repo in len():
-            # Create thread that clones repo and add to thread list
-            thread = RepoHandler(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path)
-            threads += [thread]
+    # logs into github using the token
+    gh = Github(token.strip())
 
-        # Run all clone threads
-        for thread in threads:
-            thread.start()
+    # the name of the assignment to get
+    assignment_name = input("Please input the assignment (folder) name: ")
 
-        for thread in threads:
-            thread.join()
+    # the day it's due (before midnight is assumed)
+    date_due = input("Please input the date it's due (format = yyyy-mm-dd): ")
 
-        num_of_lines = write_avg_insersions_file(initial_path, assignment_name)
-        print()
-        print(f'{LIGHT_GREEN}Done.{WHITE}')
-        print(f'{LIGHT_GREEN}Cloned {len(next(os.walk(initial_path))[1])}/{len(repos)} repos.{WHITE}')
-        print(f'{LIGHT_GREEN}Found average lines per commit for {num_of_lines}/{len(repos)} repos.{WHITE}')
-    except FileNotFoundError as e:
-        print()
-        print(f'Classroom roster `{student_filename}` not found.')
-        logging.error(e)
-    except FileExistsError as e: # Error thrown if parent assignment file already exists
-        print()
-        print(f'ERROR: File `{initial_path}` already exists, please delete it and run again')
-        logging.error(e)
-    except KeyboardInterrupt as e: # When thread fails because subprocess command threw some error/exception
-        print()
-        print('ERROR: Something happened during the cloning process; your repos are not at the proper timestamp. Delete the assignment folder and run again.')
-        logging.error(e)
-    except ValueError as e: # When git version is incompatible w/ script
-        print()
-        print(e)
-        logging.error(e)
-    except Exception as e:
-        print(f'ERROR: Something happened. Check {LOG_FILE_PATH}')
-        logging.error(e)
-    exit()
-
-    # Variables used to get proper repos
-    assignment_name = input('Assignment Name: ')
-    while not assignment_name:
-        assignment_name = input('Please input an assignment name: ')
-    date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ')
-    if not date_due:
-        current_date = date.today()
-        date_due = current_date.strftime('%Y-%m-%d')
-        print(f'Using current date: {date_due}')
-    time_due = input('Time Due (24hr, press `enter` for current): ')
-    if not time_due:
-        current_time = datetime.now()
-        time_due = current_time.strftime('%H:%M')
-        print(f'Using current date: {time_due}')
-    print()
+    # The time the assignment is due
+    time_due = input("Please input the time the "
+                     "assignment's due (24 hour time ie 23:59 = 11:59 pm): ")
 
     # makes the path of the directory that should exist
     initial_path = Path.cwd() / assignment_name

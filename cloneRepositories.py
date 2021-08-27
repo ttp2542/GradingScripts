@@ -138,7 +138,7 @@ class RepoHandler(Thread):
                 line = str(line)
                 if 'fatal' in line.lower() or 'error' in line.lower() or 'warning' in line.lower(): # if git command threw error (usually wrong branch name)
                     logging.info('Subprocess: %r', line) # Log error
-                    raise Exception(f'An error has with git.') # Raise exception to the thread
+                    raise Exception(f'An error has occured with git.') # Raise exception to the thread
 
     
     '''
@@ -148,7 +148,7 @@ class RepoHandler(Thread):
     def log_errors_given_line(self, line: str):
         if 'fatal' in line.lower() or 'error' in line.lower() or 'warning' in line.lower(): # if git command threw error (usually wrong branch name)
             logging.info('Subprocess: %r', line) # Log error
-            raise Exception(f'An error has with git.') # Raise exception to the thread
+            raise Exception(f'An error has occured with git.') # Raise exception to the thread
 
 
 '''
