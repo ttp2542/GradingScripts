@@ -65,7 +65,8 @@ class RepoHandler(Thread):
                 return
 
             self.clone_repo()
-            self.checkout_repo()
+            commit_hash = self.get_commit_hash()
+            self.checkout_repo(commit_hash)
             self.get_repo_stats()
         except IndexError as e: # Catch exception raised by get_repo_stats
                 print(f'{LIGHT_RED}IndexError while finding average lines per commit for `{self.__repo.name}`.{WHITE}')
@@ -85,12 +86,24 @@ class RepoHandler(Thread):
 
 
     '''
-    Get commit hash at timestamp and reset local repo to timestamp on the default branch (git rev-list output piped to git checkout)
+    Get commit hash at timestamp and reset local repo to timestamp on the default branch
     '''
-    def checkout_repo(self):
-        rev_list_checkout_process = subprocess.Popen(f'git rev-list -n 1 --before="{self.__date_due.strip()} {self.__time_due.strip()}" origin/{self.__repo.default_branch} | git checkout', cwd=self.__repo_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self.log_errors_given_subprocess(rev_list_checkout_process)
+    def get_commit_hash(self) -> str:
+        rev_list_process = subprocess.Popen(f'git rev-list -n 1 --before="{self.__date_due.strip()} {self.__time_due.strip()}" origin/{self.__repo.default_branch}', cwd=self.__repo_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        with rev_list_process:
+            for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
+                line = str(line)
+                self.log_errors_given_line(line)
+                return line[2:-3]
+        
 
+    '''
+    Use commit hash and reset local repo to that commit (use git reset instead of git checkout to remove detached head warning)
+    '''
+    def rollback_repo(self, commit_hash):
+        checkout_process = subprocess.Popen(f'git reset --hard {commit_hash}', cwd=self.__repo_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.log_errors_given_subprocess(checkout_process)
+        
 
     '''
     Get commit history stats and find average number of insertions per commit
