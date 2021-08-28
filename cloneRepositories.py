@@ -66,7 +66,7 @@ class RepoHandler(Thread):
 
             self.clone_repo()
             commit_hash = self.get_commit_hash()
-            self.checkout_repo(commit_hash)
+            self.rollback_repo(commit_hash)
             self.get_repo_stats()
         except IndexError as e: # Catch exception raised by get_repo_stats
                 print(f'{LIGHT_RED}IndexError while finding average lines per commit for `{self.__repo.name}`.{WHITE}')
