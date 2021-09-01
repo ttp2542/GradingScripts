@@ -82,7 +82,11 @@ class RepoHandler(Thread):
     def clone_repo(self):
         print(f'Cloning {self.__repo.name} into {self.__repo_path}...')
         clone_process = subprocess.Popen(f'git clone {self.__repo.clone_url} "{str(self.__repo_path)}"', stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # git clone to output file, Hides output from console
-        self.log_errors_given_subprocess(clone_process)
+        try:
+            self.log_errors_given_subprocess(clone_process)
+        except Exception as e:
+            print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because clone failed (likely due to invalid filename).{WHITE}')
+            logging.warning(f'Skipping repo `{self.__repo.name}` because clone failed (likely due to invalid filename).')
 
 
     '''
@@ -102,7 +106,11 @@ class RepoHandler(Thread):
     '''
     def rollback_repo(self, commit_hash):
         checkout_process = subprocess.Popen(f'git reset --hard {commit_hash}', cwd=self.__repo_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self.log_errors_given_subprocess(checkout_process)
+        try:
+            self.log_errors_given_subprocess(checkout_process)
+        except Exception as e:
+            print(f'{LIGHT_RED}Rollback failed for `{self.__repo.name}` (likely due to invalid filename at specified commit).{WHITE}')
+            logging.warning(f'Rollback failed for `{self.__repo.name}` (likely due to invalid filename at specified commit).')
         
 
     '''
