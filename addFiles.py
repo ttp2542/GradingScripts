@@ -1,8 +1,7 @@
-import git
 import os
-from pygithub3 import Github
-from pathlib import Path
 
+from github import Github
+from pathlib import Path
 """
 This script is meant to be used to copy files from a directory into all the
 student's githubs. In order to be used you must specify the directory which
