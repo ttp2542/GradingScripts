@@ -81,7 +81,7 @@ class RepoHandler(Thread):
     '''
     def clone_repo(self):
         print(f'Cloning {self.__repo.name} into {self.__repo_path}...')
-        clone_process = subprocess.Popen(f'git clone {self.__repo.clone_url} "{str(self.__repo_path)}"', stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # git clone to output file, Hides output from console
+        clone_process = subprocess.Popen(['git', 'clone', self.__repo.clone_url, f'{str(self.__repo_path)}'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # git clone to output file, Hides output from console
         try:
             self.log_errors_given_subprocess(clone_process)
         except Exception as e:
@@ -93,7 +93,7 @@ class RepoHandler(Thread):
     Get commit hash at timestamp and reset local repo to timestamp on the default branch
     '''
     def get_commit_hash(self) -> str:
-        rev_list_process = subprocess.Popen(f'git rev-list -n 1 --before="{self.__date_due.strip()} {self.__time_due.strip()}" origin/{self.__repo.default_branch}', cwd=self.__repo_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        rev_list_process = subprocess.Popen(['git', 'rev-list', '-n', '1', f'--before="{self.__date_due.strip()} {self.__time_due.strip()}"', f'origin/{self.__repo.default_branch}'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         with rev_list_process:
             for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
                 line = line.decode()
@@ -105,7 +105,7 @@ class RepoHandler(Thread):
     Use commit hash and reset local repo to that commit (use git reset instead of git checkout to remove detached head warning)
     '''
     def rollback_repo(self, commit_hash):
-        checkout_process = subprocess.Popen(f'git reset --hard {commit_hash}', cwd=self.__repo_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        checkout_process = subprocess.Popen(['git', 'reset', '--hard', commit_hash], cwd=self.__repo_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         try:
             self.log_errors_given_subprocess(checkout_process)
         except Exception as e:
@@ -118,7 +118,7 @@ class RepoHandler(Thread):
     '''
     def get_repo_stats(self):
         # Get commit history stats
-        log_process = subprocess.Popen(f'git log --oneline --shortstat', cwd=self.__repo_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        log_process = subprocess.Popen(['git', 'log', '--oneline', '--shortstat'], cwd=self.__repo_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         # Loop through response line by line
         repo_stats = []
         with log_process:
@@ -351,7 +351,7 @@ def make_default_config():
 Check that git version is at or above min requirements for script
 '''
 def check_git_version():
-    git_version = str(subprocess.check_output('git --version', stderr=subprocess.PIPE))[14:18]
+    git_version = subprocess.check_output(['git', '--version'], stderr=subprocess.PIPE).decode().strip()[12:16]
     if float(git_version) < MIN_GIT_VERSION:
         raise ValueError(f'Your version of git is not compatible with this script. Use version {MIN_GIT_VERSION}+.')
 
@@ -361,10 +361,10 @@ Check that PyGithub version is at or above min requirements for script
 '''
 def check_pygithub_version():
     version = 0.0
-    check_pygithub_version_process = subprocess.Popen('pip show pygithub', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    check_pygithub_version_process = subprocess.Popen(['pip', 'show', 'pygithub'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     with check_pygithub_version_process:
         for line in iter(check_pygithub_version_process.stdout.readline, b''): # b'\n'-separated lines
-            line = str(line).lower()
+            line = line.decode().lower()
             if 'version:' in line:
                 version = float(line.split(': ')[1][0:4])
         if version < MIN_PYGITHUB_VERSION:
@@ -391,7 +391,8 @@ Main function
 '''
 def main():
     # Enable color in cmd
-    os.system('color')
+    if os.name == 'nt':
+        os.system('color')
     # Create log file
     logging.basicConfig(level=logging.INFO, filename=LOG_FILE_PATH)
 
