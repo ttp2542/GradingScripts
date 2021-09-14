@@ -199,7 +199,7 @@ def get_students(student_filename: str) -> dict:
             csv_reader = csv.reader(f_handle)
             next(csv_reader)
             for student in csv_reader:
-                name = student[0].replace(', ', '-')
+                name = re.sub(r'[. ]', '', re.sub(r'(, )|(,)', '-', student[0]).split(' ')[0])
                 github = student[1]
                 if name and github:
                     students[github] = name
