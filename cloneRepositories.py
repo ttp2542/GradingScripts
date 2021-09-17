@@ -364,9 +364,13 @@ def check_git_version():
     '''
     Check that git version is at or above min requirements for script
     '''
-    git_version = subprocess.check_output(['git', '--version'], stderr=subprocess.PIPE).decode().strip()[12:16]
-    if float(git_version) < MIN_GIT_VERSION:
-        raise ValueError(f'Your version of git is not compatible with this script. Use version {MIN_GIT_VERSION}+.')
+    try:
+        git_version = subprocess.check_output(['git', '--version'], stderr=subprocess.PIPE).decode().strip()[12:16]
+        if float(git_version) < MIN_GIT_VERSION:
+            raise ValueError(f'Your version of git is not compatible with this script. Use version {MIN_GIT_VERSION}+.')
+    except FileNotFoundError:
+        raise NotImplementedError('git not installed on the path.')
+
 
 
 def check_pygithub_version():
@@ -374,14 +378,17 @@ def check_pygithub_version():
     Check that PyGithub version is at or above min requirements for script
     '''
     version = 0.0
-    check_pygithub_version_process = subprocess.Popen(['pip', 'show', 'pygithub'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    with check_pygithub_version_process:
-        for line in iter(check_pygithub_version_process.stdout.readline, b''): # b'\n'-separated lines
-            line = line.decode().lower()
-            if 'version:' in line:
-                version = float(line.split(': ')[1][0:4])
-        if version < MIN_PYGITHUB_VERSION:
-            raise ValueError(f'Incompatible PyGithub version. Use version {MIN_PYGITHUB_VERSION}+. Use `pip install PyGithub --upgrade` to update')
+    try:
+        check_pygithub_version_process = subprocess.Popen(['pip', 'show', 'pygithub'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        with check_pygithub_version_process:
+            for line in iter(check_pygithub_version_process.stdout.readline, b''): # b'\n'-separated lines
+                line = line.decode().lower()
+                if 'version:' in line:
+                    version = float(line.split(': ')[1][0:4])
+            if version < MIN_PYGITHUB_VERSION:
+                raise ValueError(f'Incompatible PyGithub version. Use version {MIN_PYGITHUB_VERSION}+. Use `pip install PyGithub --upgrade` to update')
+    except FileNotFoundError:
+        raise NotImplementedError('pip not installed on the path.')
 
 
 def write_avg_insersions_file(initial_path, assignment_name):
@@ -485,6 +492,10 @@ def main():
         print('ERROR: Something happened during the cloning process; your repos are not at the proper timestamp. Delete the assignment folder and run again.')
         logging.error(e)
     except ValueError as e: # When git version is incompatible w/ script
+        print()
+        print(e)
+        logging.error(e)
+    except NotImplementedError as e:
         print()
         print(e)
         logging.error(e)
