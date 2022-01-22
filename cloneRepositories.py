@@ -65,16 +65,17 @@ class RepoHandler(Thread):
                 print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because it has 0 commits.{WHITE}')
                 logging.warning(f'Skipping repo `{self.__repo.name}` because it has 0 commits.')
                 return
-
-            self.clone_repo() # clones repo
-            commit_hash = self.get_commit_hash() # get commit hash at due date
             
-            if commit_hash is not None: # commit hash is found at the due date
+            due_date = datetime.strptime(f'{self.__date_due} {self.__time_due}', '%Y-%m-%d %H:%M')
+
+            if due_date > self.__repo.created_at: # clone only if the repo was made before the due date
+                self.clone_repo() # clones repo
+                commit_hash = self.get_commit_hash() # get commit hash at due date
                 self.rollback_repo(commit_hash) # rollback repo to commit hash
                 self.get_repo_stats() # get average lines per commit
             else:
-                print(f'{LIGHT_RED}Cannot rollback repository `{self.__repo.name}` because it was created past the due date (created: {self.__repo.created_at}).{WHITE}')
-                logging.warning(f'Repo `{self.__repo.name}` failed to roll back because it was created past the due date (created: {self.__repo.created_at}).')
+                print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because it was created past the due date (created: {self.__repo.created_at}).{WHITE}')
+                logging.warning(f'Skipping `{self.__repo.name}`  because it was created past the due date (created: {self.__repo.created_at}).')
                 return 
 
         except IndexError as e: # Catch exception raised by get_repo_stats
