@@ -507,6 +507,9 @@ def main():
         print()
         print(e)
         logging.error(e)
+    except Exception as e: # If anything else happens
+        print(f'ERROR: Something happened. Check {LOG_FILE_PATH}')
+        logging.error(e)
     exit()
 
 
