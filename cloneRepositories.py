@@ -68,8 +68,15 @@ class RepoHandler(Thread):
 
             self.clone_repo() # clones repo
             commit_hash = self.get_commit_hash() # get commit hash at due date
-            self.rollback_repo(commit_hash) # rollback repo to commit hash
-            self.get_repo_stats() # get average lines per commit
+            
+            if commit_hash is not None: # commit hash is found at the due date
+                self.rollback_repo(commit_hash) # rollback repo to commit hash
+                self.get_repo_stats() # get average lines per commit
+            else:
+                print(f'{LIGHT_RED}Cannot rollback repository `{self.__repo.name}` because it was created past the due date (created: {self.__repo.created_at}).{WHITE}')
+                logging.warning(f'Repo `{self.__repo.name}` failed to roll back because it was created past the due date (created: {self.__repo.created_at}).')
+                return 
+
         except IndexError as e: # Catch exception raised by get_repo_stats
                 print(f'{LIGHT_RED}IndexError while finding average lines per commit for `{self.__repo.name}`.{WHITE}') # Print error to end user
                 logging.warning(f'IndexError while finding average lines per commit for `{self.__repo.name}`.') # log warning to log file
@@ -86,6 +93,7 @@ class RepoHandler(Thread):
         Due to some weird authentication issues. Git clone might need to have the github link with the token passed e.g.
         https://www.<token>@github.com/<organization>/<Repository.name>
         '''
+        
         print(f'Cloning {self.__repo.name} into {self.__repo_path}...') # tell end user what repo is being cloned and where it is going to
         # run process on system that executes 'git clone' command. stdout is redirected so it doesn't output to end user
         clone_process = subprocess.Popen(['git', 'clone', self.__repo.clone_url, f'{str(self.__repo_path)}'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # git clone to output file, Hides output from console
@@ -498,9 +506,6 @@ def main():
     except NotImplementedError as e:
         print()
         print(e)
-        logging.error(e)
-    except Exception as e: # If anything else happens
-        print(f'ERROR: Something happened. Check {LOG_FILE_PATH}')
         logging.error(e)
     exit()
 
