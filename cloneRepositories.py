@@ -439,18 +439,33 @@ def main():
 
         # Variables used to get proper repos
         assignment_name = input('Assignment Name: ') # get assignment name (repo prefix)
+
         while not assignment_name: # if input is empty ask again
             assignment_name = input('Please input an assignment name: ')
+
         date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ') # get due date
-        if not date_due: # If due date is blank use current date
-            current_date = date.today() # get current date
-            date_due = current_date.strftime('%Y-%m-%d') # get current date in year-month-day format
-            print(f'Using current date: {date_due}') # output what is being used to end user
+        while True:
+            if not date_due: # If due date is blank use current date
+                current_date = date.today() # get current date
+                date_due = current_date.strftime('%Y-%m-%d') # get current date in year-month-day format
+                print(f'Using current date: {date_due}')
+                break
+            elif not re.match('^\d{4}-\d{2}-\d{2}', date_due): # format is incorrect
+                date_due = input("Due date not in the correct format (format = yyy-mm-dd or press enter for current): ")
+            else:
+                break
+
         time_due = input('Time Due (24hr, press `enter` for current): ') # get time assignment was due
-        if not time_due: # if time due is blank use current time
-            current_time = datetime.now() # get current time
-            time_due = current_time.strftime('%H:%M') # format current time into hour:minute 24hr format
-            print(f'Using current date: {time_due}') # output what is being used to end user
+        while True:
+            if not time_due: # if time due is blank use current time
+                current_time = datetime.now() # get current time
+                time_due = current_time.strftime('%H:%M') # format current time into hour:minute 24hr format
+                print(f'Using current date: {time_due}') # output what is being used to end user
+            elif not re.findall('^\d{2}:\d{2}', time_due):
+                time_due = input("Time due not in the correct format (format = 24:00 or press enter for current): ")
+            else:
+                break
+
         print() # new line for formatting reasons
 
         # If student roster is specified, get repos list using proper function
