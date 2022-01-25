@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import _thread
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from github import Github
 from github.Organization import Organization
 from github.Repository import Repository
@@ -27,7 +27,7 @@ LIGHT_GREEN = '\033[1;32m' # Ansi code for light_green
 LIGHT_RED = '\033[1;31m' # Ansi code for light_red
 WHITE = '\033[0m' # Ansi code for white to reset back to normal text
 AVG_INSERTIONS_DICT = dict() # Global dict that threads map repos to average lines of code per commit
-
+UTC_OFFSET = -5 # how many hours are behind from UTC+0 (github default) to a specified timezone. New York, NY is UTC -5
 
 class RepoHandler(Thread):
     '''
@@ -58,24 +58,26 @@ class RepoHandler(Thread):
         Clones given repo and renames destination to student real name if class roster is provided.
         '''
         try:            
-            # If no commits, skip repo
-            try:
-                num_commits = len(list(self.__repo.get_commits()))
-            except:
+
+            num_commits = self.__repo.get_commits().totalCount - 1 # commits always include the one created by github-classroom, want to avoid counting that
+
+            if (num_commits <= 0): # skip repo if no commits are made
                 print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because it has 0 commits.{WHITE}')
                 logging.warning(f'Skipping repo `{self.__repo.name}` because it has 0 commits.')
-                return
-            
-            due_date = datetime.strptime(f'{self.__date_due} {self.__time_due}', '%Y-%m-%d %H:%M')
+                return 
 
-            if due_date > self.__repo.created_at: # clone only if the repo was made before the due date
+            date_due = datetime.strptime(f'{self.__date_due} {self.__time_due}:00', '%Y-%m-%d %H:%M:%S')
+            date_repo = self.__repo.created_at + timedelta(hours = UTC_OFFSET)
+
+            if date_due > date_repo: # clone only if the repo was created before the due date
                 self.clone_repo() # clones repo
                 commit_hash = self.get_commit_hash() # get commit hash at due date
                 self.rollback_repo(commit_hash) # rollback repo to commit hash
                 self.get_repo_stats() # get average lines per commit
             else:
-                print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because it was created past the due date (created: {self.__repo.created_at}).{WHITE}')
-                logging.warning(f'Skipping `{self.__repo.name}`  because it was created past the due date (created: {self.__repo.created_at}).')
+                print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because it was created past the due date (created: {date_repo}).{WHITE}')
+                #print(f"""{LIGHT_RED}Skipping `{self.__repo.name}` because it was created past the due date (created: {date_repo}).{WHITE}\n\tOLDEST COMMIT:\n\t\tauthor={self.__repo.get_commits().reversed[0].commit.author.name},\n\t\tcreated={self.__repo.get_commits().reversed[0].commit.author.date + timedelta(hours = UTC_OFFSET)},\n\t\tmessage={self.__repo.get_commits().reversed[0].commit.message}\n\tNEWEST COMMIT:\n\t\tauthor={self.__repo.get_commits()[0].commit.author.name},\n\t\tcreated={self.__repo.get_commits()[0].commit.author.date + timedelta(hours = UTC_OFFSET)},\n\t\tmessage={self.__repo.get_commits()[0].commit.message}""")
+                logging.warning(f'Skipping `{self.__repo.name}`  because it was created past the due date (created: {date_repo}).')
                 return 
 
         except IndexError as e: # Catch exception raised by get_repo_stats
@@ -110,7 +112,10 @@ class RepoHandler(Thread):
         Get commit hash at timestamp and reset local repo to timestamp on the default branch
         '''
         # run process on system that executes 'git rev-list' command. stdout is redirected so it doesn't output to end user
-        rev_list_process = subprocess.Popen(['git', 'rev-list', '-n', '1', f'--before="{self.__date_due.strip()} {self.__time_due.strip()}"', f'origin/{self.__repo.default_branch}'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        due_date = datetime.strptime(f'{self.__date_due} {self.__time_due}', '%Y-%m-%d %H:%M') - timedelta(hours=UTC_OFFSET) # Convert from current UTC to UTC+0 (github default)
+        to_string = due_date.strftime('%Y-%m-%d %H:%M')
+
+        rev_list_process = subprocess.Popen(['git', 'rev-list', '-n', '1', f'--before="{to_string}"', f'origin/{self.__repo.default_branch}'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         with rev_list_process: # Read rev list output line by line to search for error or commit hash
             for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
                 line = line.decode()
@@ -449,10 +454,10 @@ def main():
                 current_date = date.today() # get current date
                 date_due = current_date.strftime('%Y-%m-%d') # get current date in year-month-day format
                 print(f'Using current date: {date_due}')
-                break
             elif not re.match('\d{4}-\d{2}-\d{2}', date_due): # format checking for input
                 date_due = input("Due date not in the correct format (format = yyy-mm-dd or press enter for current): ")
             else:
+                date_due = re.findall('^\d{4}-\d{2}-\d{2}', date_due)[0] # grab only first instance in the event that more than one are matched
                 break
 
         time_due = input('Time Due (24hr, press `enter` for current): ') # get time assignment was due
@@ -462,8 +467,9 @@ def main():
                 time_due = current_time.strftime('%H:%M') # format current time into hour:minute 24hr format
                 print(f'Using current date: {time_due}') # output what is being used to end user
             elif not re.match('\d{2}:\d{2}', time_due): # format checking for input
-                time_due = input("Time due not in the correct format (format = 24:00 or press enter for current): ")
+                time_due = input("Time due not in the correct format (24hr or press `enter` for current): ")
             else:
+                time_due = re.findall('^\d{2}:\d{2}', time_due)[0] # grab only first instance in the event that more than one are matched
                 break
 
         print() # new line for formatting reasons
