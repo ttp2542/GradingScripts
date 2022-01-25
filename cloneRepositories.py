@@ -112,10 +112,7 @@ class RepoHandler(Thread):
         Get commit hash at timestamp and reset local repo to timestamp on the default branch
         '''
         # run process on system that executes 'git rev-list' command. stdout is redirected so it doesn't output to end user
-        due_date = datetime.strptime(f'{self.__date_due} {self.__time_due}', '%Y-%m-%d %H:%M') - timedelta(hours=UTC_OFFSET) # Convert from current UTC to UTC+0 (github default)
-        to_string = due_date.strftime('%Y-%m-%d %H:%M')
-
-        rev_list_process = subprocess.Popen(['git', 'rev-list', '-n', '1', f'--before="{to_string}"', f'origin/{self.__repo.default_branch}'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        rev_list_process = subprocess.Popen(['git', 'rev-list', '-n', '1', f'--before="{self.__date_due} {self.__time_due}"', f'origin/{self.__repo.default_branch}'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         with rev_list_process: # Read rev list output line by line to search for error or commit hash
             for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
                 line = line.decode()
