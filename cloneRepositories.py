@@ -444,7 +444,7 @@ def main():
 
         while not assignment_name: # if input is empty ask again
             assignment_name = input('Please input an assignment name: ')
-
+        
         date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ') # get due date
         while True:
             if not date_due: # If due date is blank use current date
@@ -469,6 +469,11 @@ def main():
                 time_due = re.findall('^\d{2}:\d{2}', time_due)[0] # grab only first instance in the event that more than one are matched
                 break
 
+        # Sets path to output directory inside assignment folder where repos will be cloned
+        time_format = datetime.strptime(f'{date_due} {time_due}', '%Y-%m-%d %H:%M') # convert inputs to date time
+        time_folder = datetime.strftime(time_format, '%m-%d-%Y-%H-%M-%S') # github classroom styled format
+        initial_path = output_dir / f"{assignment_name}-{time_folder}"
+
         print() # new line for formatting reasons
 
         # If student roster is specified, get repos list using proper function
@@ -478,9 +483,6 @@ def main():
             repos = get_repos_specified_students(assignment_name, git_org_client, students)
         else:
             repos = get_repos(assignment_name, git_org_client)
-
-        # Sets path to output directory inside assignment folder where repos will be cloned
-        initial_path = output_dir / assignment_name
 
         # Makes parent folder for whole assignment. Raises eror if file already exists and it cannot be deleted
         file_exists_handler(initial_path)
