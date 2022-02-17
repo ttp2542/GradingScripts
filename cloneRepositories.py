@@ -445,13 +445,6 @@ def main():
         while not assignment_name: # if input is empty ask again
             assignment_name = input('Please input an assignment name: ')
         
-        assignment_name_with_timestamp = input('Assignment folder with timestamp? (any non-empty input for yes or press `enter` for no): ') # if folder should be listed with timestamp pulled
-        
-        if not assignment_name_with_timestamp: # if input is empty
-            assignment_name_with_timestamp = False
-        else:
-            assignment_name_with_timestamp = True
-
         date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ') # get due date
         while True:
             if not date_due: # If due date is blank use current date
@@ -477,12 +470,9 @@ def main():
                 break
 
         # Sets path to output directory inside assignment folder where repos will be cloned
-        if assignment_name_with_timestamp:
-            time_format = datetime.strptime(f'{date_due} {time_due}', '%Y-%m-%d %H:%M') # convert inputs to date time
-            time_folder = datetime.strftime(time_format, '%m-%d-%Y-%H-%M-%S') # github classroom styled format
-            initial_path = output_dir / f"{assignment_name}-{time_folder}"
-        else:
-            initial_path = output_dir / assignment_name
+        time_format = datetime.strptime(f'{date_due} {time_due}', '%Y-%m-%d %H:%M') # convert inputs to date time
+        time_folder = datetime.strftime(time_format, '%m-%d-%Y-%H-%M-%S') # github classroom styled format
+        initial_path = output_dir / f"{assignment_name}-{time_folder}"
 
         print() # new line for formatting reasons
 
