@@ -65,7 +65,7 @@ class RepoHandler(Thread):
             num_commits = self.__repo.get_commits().totalCount - 1 # commits always include the one created by github-classroom, want to avoid counting that
 
             if (num_commits <= 0): # skip repo if no commits are made
-                print(f'   > {LIGHT_RED}Skipping `{self.get_name()}` because it has 0 commits.{WHITE}')
+                print(f'  > {LIGHT_RED}Skipping `{self.get_name()}` because it has 0 commits.{WHITE}')
                 logging.warning(f'Skipping repo `{self.get_name()}` because it has 0 commits.')
                 return 
 
@@ -81,7 +81,7 @@ class RepoHandler(Thread):
                     self.get_repo_stats() # get average lines per commit
 
             else:
-                print(f'   > {LIGHT_RED}Skipping `{self.get_name()}` because it was created past the due date (created: {date_repo}).{WHITE}')
+                print(f'  > {LIGHT_RED}Skipping `{self.get_name()}` because it was created past the due date (created: {date_repo}).{WHITE}')
                 #print(f"""{LIGHT_RED}Skipping `{self.__repo.name}` because it was created past the due date (created: {date_repo}).{WHITE}\n\tOLDEST COMMIT:\n\t\tauthor={self.__repo.get_commits().reversed[0].commit.author.name},\n\t\tcreated={self.__repo.get_commits().reversed[0].commit.author.date + timedelta(hours = UTC_OFFSET)},\n\t\tmessage={self.__repo.get_commits().reversed[0].commit.message}\n\tNEWEST COMMIT:\n\t\tauthor={self.__repo.get_commits()[0].commit.author.name},\n\t\tcreated={self.__repo.get_commits()[0].commit.author.date + timedelta(hours = UTC_OFFSET)},\n\t\tmessage={self.__repo.get_commits()[0].commit.message}""")
                 logging.warning(f'Skipping `{self.get_name()}`  because it was created past the due date (created: {date_repo}).')
                 return 
@@ -90,7 +90,7 @@ class RepoHandler(Thread):
                 print(f'   > {LIGHT_RED}IndexError while finding average lines per commit for `{self.get_name()}`.{WHITE}') # Print error to end user
                 logging.warning(f'IndexError while finding average lines per commit for `{self.get_name()}`.') # log warning to log file
         except: # Catch exception raised and interrupt main thread
-            print(f'   > {LIGHT_RED}ERROR: Sorry, ran into a problem while cloning `{self.get_name()}`. Check {LOG_FILE_PATH}.{WHITE}') # print error to end user
+            print(f'  > {LIGHT_RED}ERROR: Sorry, ran into a problem while cloning `{self.get_name()}`. Check {LOG_FILE_PATH}.{WHITE}') # print error to end user
             logging.exception('ERROR:') # log error to log file (logging automatically is passed exception)
             _thread.interrupt_main() # Interrupt main thread. 
 
@@ -103,13 +103,13 @@ class RepoHandler(Thread):
         https://www.<token>@github.com/<organization>/<Repository.name>
         '''
 
-        print(f'   > Cloning {self.get_name()}...') # tell end user what repo is being cloned and where it is going to
+        print(f'  > Cloning {self.get_name()}...') # tell end user what repo is being cloned and where it is going to
         # run process on system that executes 'git clone' command. stdout is redirected so it doesn't output to end user
         clone_process = subprocess.Popen(['git', 'clone', self.__repo.clone_url, f'{str(self.__repo_path)}'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # git clone to output file, Hides output from console
         try:
             self.log_errors_given_subprocess(clone_process) # reads output line by line and checks for errors that occured during cloning
         except Exception as e:
-            print(f'   > {LIGHT_RED}Skipping `{self.get_name()}` because clone failed (likely due to invalid filename).{WHITE}') # print error to end user
+            print(f'  > {LIGHT_RED}Skipping `{self.get_name()}` because clone failed (likely due to invalid filename).{WHITE}') # print error to end user
             logging.warning(f'Skipping repo `{self.get_name()}` because clone failed (likely due to invalid filename).') # log error to log file
     
 
@@ -136,7 +136,7 @@ class RepoHandler(Thread):
         try:
             self.log_errors_given_subprocess(checkout_process)
         except Exception as e:
-            print(f'   > {LIGHT_RED}Rollback failed for `{self.get_name()}` (likely due to invalid filename at specified commit).{WHITE}')
+            print(f'  > {LIGHT_RED}Rollback failed for `{self.get_name()}` (likely due to invalid filename at specified commit).{WHITE}')
             logging.warning(f'Rollback failed for `{self.get_name()}` (likely due to invalid filename at specified commit).')
     
     def get_name(self) -> str:
@@ -545,7 +545,7 @@ def main():
 
         if save_repo_stats:
             print(f'{LIGHT_GREEN}Found average lines per commit for {num_of_lines}/{len(repos)} repos.{WHITE}')
-            
+
     except FileNotFoundError as e: # If classroom roster file specified in config.txt isn't found.
         print()
         print(f'Classroom roster `{student_filename}` not found.')
