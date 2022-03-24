@@ -47,7 +47,7 @@ class RepoHandler(Thread):
             if re.match(r'^error:|^warning:|^fatal:', line):
                 print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}`\n\t{line}. {WHITE}') # print error to end user
             else:
-                print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}` because the hash is invalid (date is too far)\n\tLatest commit: {line}). {WHITE}') # print error to end user
+                print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}` because the hash is invalid (date is likely too far)\n\tLatest commit: {line}). {WHITE}') # print error to end user
             logging.exception('ERROR:') # log error to log file (logging automatically is passed exception)
 
 
