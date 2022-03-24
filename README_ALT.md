@@ -8,10 +8,10 @@
     - Mac users might have to use  `python3  -m pip install PyGithub`
 
 3)  ![Navigate to the Personal Access Tokens](https://github.com/settings/tokens)
-a.  Generate a new token and grant access to these scopes:  
+    - Generate a new token and grant access to these scopes:  
 ![image](https://user-images.githubusercontent.com/67706639/159988815-1849a06d-d6a6-43d2-8504-666fc714e8a6.png)
 
-b.  **IMPORTANT**  Save  the personal access token  somewhere (preferably  on a notepad)
+    - **IMPORTANT**  Save  the personal access token  somewhere (preferably  on a notepad)
 
 
 4) Keep note of these:
