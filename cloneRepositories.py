@@ -27,7 +27,6 @@ LIGHT_GREEN = '\033[1;32m' # Ansi code for light_green
 LIGHT_RED = '\033[1;31m' # Ansi code for light_red
 WHITE = '\033[0m' # Ansi code for white to reset back to normal text
 AVG_INSERTIONS_DICT = dict() # Global dict that threads map repos to average lines of code per commit
-UTC_OFFSET = -5 # how many hours are behind from UTC+0 (github default) to a specified timezone. New York, NY is UTC -5
 
 class RepoHandler(Thread):
     '''
