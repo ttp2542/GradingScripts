@@ -67,7 +67,10 @@ class RepoHandler(Thread):
                 return 
 
             date_due = datetime.strptime(f'{self.__date_due} {self.__time_due}:00', '%Y-%m-%d %H:%M:%S')
-            date_repo = self.__repo.created_at + timedelta(hours = UTC_OFFSET)
+            
+            time_local = datetime.now(datetime.now().astimezone().tzinfo) # get local time with offset
+            offset = time_local.utcoffset().total_seconds()/60/60 # get UTC offset, accounts for daylight saving
+            date_repo = self.__repo.created_at + timedelta(hours = offset) # convert github time to local
 
             if date_due > date_repo: # clone only if the repo was created before the due date
                 self.clone_repo() # clones repo
