@@ -37,9 +37,13 @@ class RepoHandler(Thread):
             
         except: # Catch exception raised and interrupt main thread
             rev_list_process = subprocess.Popen(['git', 'log', '-1', '--format=%cd'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            line = ""
-            for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
-                line = line.decode().strip() # line is read in bytes. Decode to str
+            line = None
+            try:
+                for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
+                    line = line.decode().strip() # line is read in bytes. Decode to str
+            except:
+                pass
+
             print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}` because hash is invalid (latest commit: {line}). {WHITE}') # print error to end user
             logging.exception('ERROR:') # log error to log file (logging automatically is passed exception)
 
