@@ -135,13 +135,14 @@ def main():
         print()
 
         while True:
-            get_assignment = int(input("Which folder do you want to rollback? (enter number or press enter for recent): "))
+            get_assignment = input("Which folder do you want to rollback? (enter number or press enter for recent): ")
             if get_assignment:
-                assignment = folders.get(get_assignment)
+                assignment = folders.get(int(get_assignment))
                 if assignment:
                     break
             else :
                 assignment = folders.get(i)
+                print("assignment: " + assignment)
                 break
         
         initial_path = f'{output_dir}/{assignment}'
