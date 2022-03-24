@@ -292,7 +292,7 @@ def file_exists_handler(path):
         Path.mkdir(path)
 
 
-def save_config(token: str, organization: Organization, use_classlist: bool, student_filename: str, output_dir: Path, save_repo_stats: str):
+def save_config(token: str, organization: Organization, use_classlist: bool, student_filename: str, output_dir: Path, save_repo_stats: str, add_timestamp:str):
     '''
     Save parameters into config file to be read on future runs
     '''
@@ -308,6 +308,8 @@ def save_config(token: str, organization: Organization, use_classlist: bool, stu
         config.write(f'Output Directory: {str(output_dir)}')
         config.write('\n')
         config.write(f'Get average lines per repo: {str(save_repo_stats)}')
+        config.write('\n')
+        config.write(f'Add timestamp to folder: {str(add_timestamp)}')
 
 
 def read_config_raw() -> tuple:
@@ -337,8 +339,13 @@ def read_config_raw() -> tuple:
                 save_repo_stats = True
             else:
                 save_repo_stats = False
+            add_timestamp = config.readline().strip().split(': ')[1]
+            if add_timestamp == 'True':
+                add_timestamp = True
+            else:
+                add_timestamp = False
 
-    return (token, organization, use_classlist, student_filename, output_dir, save_repo_stats)
+    return (token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp)
 
 
 def read_config() -> tuple:
@@ -346,7 +353,7 @@ def read_config() -> tuple:
     Checks whether config already exists, if so and use_classlist is False, ask for class roster path
     '''
     if opener(CONFIG_PATH): # If config already exists
-        token, organization, use_classlist, student_filename, output_dir, save_repo_stats = read_config_raw() # get variables
+        token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp = read_config_raw() # get variables
         if use_classlist == False:
             print('OPTIONAL: Enter filename of csv file containing username and name of students. To ignore, just hit `enter`')
             student_filename = input('If ignored, repo names will not be changed to match student names: ')
@@ -359,12 +366,12 @@ def read_config() -> tuple:
                     use_classlist = 'False'
             else:
                 use_classlist = 'False'
-            save_config(token, organization, use_classlist, student_filename, output_dir, save_repo_stats)
+            save_config(token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp)
     else:
         make_default_config()
-        token, organization, use_classlist, student_filename, output_dir, save_repo_stats = read_config_raw() # Update return variables
+        token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp = read_config_raw() # Update return variables
     
-    return (token, organization, student_filename, output_dir, save_repo_stats)
+    return (token, organization, student_filename, output_dir, save_repo_stats, add_timestamp)
 
 
 def make_default_config():
@@ -400,7 +407,13 @@ def make_default_config():
     elif 'n' in save_repo_stats.lower():
         save_repo_stats = 'False'
 
-    save_config(token, organization, use_classlist, student_filename, output_dir, save_repo_stats)
+    add_timestamp = input('Add timestamp to folder name (useful for keeping track of pull times)? (Y/N): ')
+    if 'y' in add_timestamp.lower():
+        add_timestamp = 'True'
+    elif 'n' in save_repo_stats.lower():
+        add_timestamp = 'False'
+
+    save_config(token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp)
 
 
 def check_git_version():
@@ -466,7 +479,7 @@ def main():
         # Check local PyGithub module version is compatible with script
         check_pygithub_version()
         # Read config file, if doesn't exist make one using user input.
-        token, organization, student_filename, output_dir, save_repo_stats = read_config()
+        token, organization, student_filename, output_dir, save_repo_stats, add_timestamp = read_config()
 
         # Create Organization to access repos
         git_org_client = Github(token.strip(), pool_size = MAX_THREADS).get_organization(organization.strip())
@@ -502,9 +515,13 @@ def main():
                 break
 
         # Sets path to output directory inside assignment folder where repos will be cloned
-        time_format = datetime.strptime(f'{date_due} {time_due}', '%Y-%m-%d %H:%M') # convert inputs to date time
-        time_folder = datetime.strftime(time_format, '%m-%d-%Y-%H-%M-%S') # github classroom styled format
-        initial_path = output_dir / f"{assignment_name}-{time_folder}"
+
+        if bool(add_timestamp):
+            time_format = datetime.strptime(f'{date_due} {time_due}', '%Y-%m-%d %H:%M') # convert inputs to date time
+            time_folder = datetime.strftime(time_format, '%m-%d-%Y-%H-%M-%S') # github classroom styled format
+            initial_path = output_dir / f"{assignment_name}-{time_folder}"
+        else:
+            initial_path = output_dir / assignment_name
 
         print() # new line for formatting reasons
 
