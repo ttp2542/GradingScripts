@@ -36,9 +36,19 @@ class RepoHandler(Thread):
             self.rollback_repo(commit_hash) # rollback repo to commit hash
             
         except: # Catch exception raised and interrupt main thread
-            print(f'  > {LIGHT_RED}ERROR: Sorry, ran into a problem with the rollback process for `{self.__folder_name}`. Check {LOG_FILE_PATH}.{WHITE}') # print error to end user
+            rev_list_process = subprocess.Popen(['git', 'log', '-1', '--format=%cd'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            line = None
+            try:
+                for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
+                    line = line.decode().strip() # line is read in bytes. Decode to str
+            except:
+                pass
+            
+            if re.match(r'^error:|^warning:|^fatal:', line):
+                print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}`\n\t{line}. {WHITE}') # print error to end user
+            else:
+                print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}` because the hash is invalid (date is likely too far)\n\tLatest commit: {line}). {WHITE}') # print error to end user
             logging.exception('ERROR:') # log error to log file (logging automatically is passed exception)
-            _thread.interrupt_main() # Interrupt main thread. 
 
 
     def get_commit_hash(self) -> str:
@@ -128,13 +138,14 @@ def main():
         print()
 
         while True:
-            get_assignment = int(input("Which folder do you want to rollback? (enter number or press enter for recent): "))
+            get_assignment = input("Which folder do you want to rollback? (enter number or press enter for recent): ")
             if get_assignment:
-                assignment = folders.get(get_assignment)
+                assignment = folders.get(int(get_assignment))
                 if assignment:
                     break
             else :
                 assignment = folders.get(i)
+                print("assignment: " + assignment)
                 break
         
         initial_path = f'{output_dir}/{assignment}'
@@ -168,9 +179,10 @@ def main():
         print(f"Output directory: {initial_path}")
         threads = []
         for directory in os.listdir(initial_path):
-            path = f'{initial_path}/{directory}'
-            thread = RepoHandler(directory, path, date_due, time_due)
-            threads.append(thread)
+            if not re.findall("avgLinesInserted", directory):
+                path = f'{initial_path}/{directory}'
+                thread = RepoHandler(directory, path, date_due, time_due)
+                threads.append(thread)
 
         # Run all clone threads
         for thread in threads:
