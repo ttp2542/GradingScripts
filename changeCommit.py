@@ -143,9 +143,12 @@ def main():
         while True:
             get_assignment = input("Which folder do you want to rollback? (enter number or press enter for recent): ")
             if get_assignment:
-                assignment = folders.get(int(get_assignment))
-                if assignment:
-                    break
+                try:
+                    assignment = folders.get(int(get_assignment))
+                    if assignment:
+                        break
+                except:
+                    pass
             else :
                 assignment = folders.get(i)
                 print("assignment: " + assignment)
