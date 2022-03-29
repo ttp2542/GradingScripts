@@ -2,7 +2,7 @@ from cloneRepositories import *
 """
 This script changes the commit head of a previously cloned repository.
 
-@author Trey Pachucki ttp2542@g.rit.edu, Jin Moon jym2584@g.rit.edu
+@author Trey Pachucki ttp2542@g.rit.edu, Jin Moon jym2584@g.rit.edu, Kamron Cole kjc8084@rit.edu
 """
 from threading import Thread
 import _thread
