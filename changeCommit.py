@@ -153,29 +153,8 @@ def main():
         
         initial_path = f'{output_dir}/{assignment}'
 
-        date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ') # get due date
-        while True:
-            if not date_due: # If due date is blank use current date
-                current_date = date.today() # get current date
-                date_due = current_date.strftime('%Y-%m-%d') # get current date in year-month-day format
-                print(f'Using current date: {date_due}')
-            elif not re.match('\d{4}-\d{2}-\d{2}', date_due): # format checking for input
-                date_due = input("Due date not in the correct format (format = yyy-mm-dd or press enter for current): ")
-            else:
-                date_due = re.findall('^\d{4}-\d{2}-\d{2}', date_due)[0] # grab only first instance in the event that more than one are matched
-                break
-
-        time_due = input('Time Due (24hr, press `enter` for current): ') # get time assignment was due
-        while True:
-            if not time_due: # if time due is blank use current time
-                current_time = datetime.now() # get current time
-                time_due = current_time.strftime('%H:%M') # format current time into hour:minute 24hr format
-                print(f'Using current date: {time_due}') # output what is being used to end user
-            elif not re.match('\d{2}:\d{2}', time_due): # format checking for input
-                time_due = input("Time due not in the correct format (24hr or press `enter` for current): ")
-            else:
-                time_due = re.findall('^\d{2}:\d{2}', time_due)[0] # grab only first instance in the event that more than one are matched
-                break
+        date_due = get_date_due()
+        time_due = get_time_due()
         
         print()
 
