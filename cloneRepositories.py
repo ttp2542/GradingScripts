@@ -463,6 +463,52 @@ def write_avg_insersions_file(initial_path, assignment_name):
             num_of_lines += 1
     return num_of_lines
 
+def get_assignment_name() -> str:
+    """
+    Input for getting assignment name
+    """
+    assignment_name = input('Assignment Name: ') # get assignment name (repo prefix)
+
+    while not assignment_name: # if input is empty ask again
+        assignment_name = input('Please input an assignment name: ')
+    
+    return assignment_name
+
+def get_date_due() -> str:
+    """
+    Input for getting date due with input validation
+    """
+    date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ') # get due date
+    while True:
+        if not date_due: # If due date is blank use current date
+            current_date = date.today() # get current date
+            date_due = current_date.strftime('%Y-%m-%d') # get current date in year-month-day format
+            print(f'Using current date: {date_due}')
+        elif not re.match('\d{4}-\d{2}-\d{2}', date_due): # format checking for input
+            date_due = input("Due date not in the correct format (format = yyy-mm-dd or press enter for current): ")
+        else:
+            date_due = re.findall('^\d{4}-\d{2}-\d{2}', date_due)[0] # grab only first instance in the event that more than one are matched
+            break
+    
+    return date_due
+
+def get_time_due() -> str:
+    """
+    Input for getting time due with input validation
+    """
+    time_due = input('Time Due (24hr, press `enter` for current): ') # get time assignment was due
+    while True:
+        if not time_due: # if time due is blank use current time
+            current_time = datetime.now() # get current time
+            time_due = current_time.strftime('%H:%M') # format current time into hour:minute 24hr format
+            print(f'Using current date: {time_due}') # output what is being used to end user
+        elif not re.match('\d{2}:\d{2}', time_due): # format checking for input
+            time_due = input("Time due not in the correct format (24hr or press `enter` for current): ")
+        else:
+            time_due = re.findall('^\d{2}:\d{2}', time_due)[0] # grab only first instance in the event that more than one are matched
+            break
+    
+    return time_due
 
 def main():
     '''
@@ -487,35 +533,10 @@ def main():
         git_org_client = Github(token.strip(), pool_size = MAX_THREADS).get_organization(organization.strip())
 
         # Variables used to get proper repos
-        assignment_name = input('Assignment Name: ') # get assignment name (repo prefix)
-
-        while not assignment_name: # if input is empty ask again
-            assignment_name = input('Please input an assignment name: ')
-
-        date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ') # get due date
-        while True:
-            if not date_due: # If due date is blank use current date
-                current_date = date.today() # get current date
-                date_due = current_date.strftime('%Y-%m-%d') # get current date in year-month-day format
-                print(f'Using current date: {date_due}')
-            elif not re.match('\d{4}-\d{2}-\d{2}', date_due): # format checking for input
-                date_due = input("Due date not in the correct format (format = yyy-mm-dd or press enter for current): ")
-            else:
-                date_due = re.findall('^\d{4}-\d{2}-\d{2}', date_due)[0] # grab only first instance in the event that more than one are matched
-                break
-
-        time_due = input('Time Due (24hr, press `enter` for current): ') # get time assignment was due
-        while True:
-            if not time_due: # if time due is blank use current time
-                current_time = datetime.now() # get current time
-                time_due = current_time.strftime('%H:%M') # format current time into hour:minute 24hr format
-                print(f'Using current date: {time_due}') # output what is being used to end user
-            elif not re.match('\d{2}:\d{2}', time_due): # format checking for input
-                time_due = input("Time due not in the correct format (24hr or press `enter` for current): ")
-            else:
-                time_due = re.findall('^\d{2}:\d{2}', time_due)[0] # grab only first instance in the event that more than one are matched
-                break
-
+        assignment_name = get_assignment_name()
+        date_due = get_date_due()
+        time_due = get_time_due()
+        
         # Sets path to output directory inside assignment folder where repos will be cloned
 
         if bool(add_timestamp):

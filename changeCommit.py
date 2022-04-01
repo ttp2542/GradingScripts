@@ -2,7 +2,7 @@ from cloneRepositories import *
 """
 This script changes the commit head of a previously cloned repository.
 
-@author Trey Pachucki ttp2542@g.rit.edu, Jin Moon jym2584@g.rit.edu
+@author Trey Pachucki ttp2542@g.rit.edu, Jin Moon jym2584@g.rit.edu, Kamron Cole kjc8084@rit.edu
 """
 from threading import Thread
 import _thread
@@ -36,10 +36,13 @@ class RepoHandler(Thread):
             self.rollback_repo(commit_hash) # rollback repo to commit hash
             
         except: # Catch exception raised and interrupt main thread
-            rev_list_process = subprocess.Popen(['git', 'log', '-1', '--format=%cd'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            rev_list_process = subprocess.Popen(['git', 'log', '--reverse', '--date-order', '--date=local', '--max-parents=0' '--format=%cd'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             line = None
             try:
-                for line in iter(rev_list_process.stdout.readline, b''): # b'\n'-separated lines
+                i = 0
+                for line in iter(rev_list_process.stdout.readline, b'\n'): # b'\n'-separated lines
+                    if (i == 1): # really terrible way of doing this, but this guarantees to grab the date 
+                        break
                     line = line.decode().strip() # line is read in bytes. Decode to str
             except:
                 pass
@@ -47,7 +50,7 @@ class RepoHandler(Thread):
             if re.match(r'^error:|^warning:|^fatal:', line):
                 print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}`\n\t{line}. {WHITE}') # print error to end user
             else:
-                print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}` because the hash is invalid (date is likely too far)\n\tLatest commit: {line}). {WHITE}') # print error to end user
+                print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}` because the hash is invalid (date is likely too far)\n\tOldest commit: {line}). {WHITE}') # print error to end user
             logging.exception('ERROR:') # log error to log file (logging automatically is passed exception)
 
 
@@ -140,9 +143,12 @@ def main():
         while True:
             get_assignment = input("Which folder do you want to rollback? (enter number or press enter for recent): ")
             if get_assignment:
-                assignment = folders.get(int(get_assignment))
-                if assignment:
-                    break
+                try:
+                    assignment = folders.get(int(get_assignment))
+                    if assignment:
+                        break
+                except:
+                    pass
             else :
                 assignment = folders.get(i)
                 print("assignment: " + assignment)
@@ -150,29 +156,8 @@ def main():
         
         initial_path = f'{output_dir}/{assignment}'
 
-        date_due = input('Date Due (format = yyyy-mm-dd, press `enter` for current): ') # get due date
-        while True:
-            if not date_due: # If due date is blank use current date
-                current_date = date.today() # get current date
-                date_due = current_date.strftime('%Y-%m-%d') # get current date in year-month-day format
-                print(f'Using current date: {date_due}')
-            elif not re.match('\d{4}-\d{2}-\d{2}', date_due): # format checking for input
-                date_due = input("Due date not in the correct format (format = yyy-mm-dd or press enter for current): ")
-            else:
-                date_due = re.findall('^\d{4}-\d{2}-\d{2}', date_due)[0] # grab only first instance in the event that more than one are matched
-                break
-
-        time_due = input('Time Due (24hr, press `enter` for current): ') # get time assignment was due
-        while True:
-            if not time_due: # if time due is blank use current time
-                current_time = datetime.now() # get current time
-                time_due = current_time.strftime('%H:%M') # format current time into hour:minute 24hr format
-                print(f'Using current date: {time_due}') # output what is being used to end user
-            elif not re.match('\d{2}:\d{2}', time_due): # format checking for input
-                time_due = input("Time due not in the correct format (24hr or press `enter` for current): ")
-            else:
-                time_due = re.findall('^\d{2}:\d{2}', time_due)[0] # grab only first instance in the event that more than one are matched
-                break
+        date_due = get_date_due()
+        time_due = get_time_due()
         
         print()
 
