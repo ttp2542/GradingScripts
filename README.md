@@ -6,3 +6,15 @@ Welcome to the GradingScripts, home of all the scripts needed to grade the GCIS 
 #### Setup Guide
 - [Full version](README_ORIG.md)
 - [Abriged](README_ALT.md)
+
+#### If you are getting a config mismatch, make sure the file is formatted like this:
+`config.txt`
+```
+Token: GITHUB_TOKEN
+Organization: ORG-NAME
+Save Classroom Roster: True
+Classroom Roster Path: ABSOLUTE_PATH
+Output Directory: ABSOLUTE_PATH
+Get average lines per repo: False
+Add timestamp to folder: True
+```
