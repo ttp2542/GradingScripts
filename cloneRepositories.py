@@ -12,10 +12,9 @@ from github.Organization import Organization
 from github.Repository import Repository
 from pathlib import Path
 from threading import Thread
-from json import dumps
 '''
 Script to clone all or some repositories in a Github Organization based on repo prefix and usernames
-@authors  Kamron Cole kjc8084@rit.edu, Trey Pachucki ttp2542@g.rit.edu
+@authors  Kamron Cole kjc8084@rit.edu, Trey Pachucki ttp2542@g.rit.edu, Jin Moon jym2584@rit.edu
 '''
 AVERAGE_LINES_FILENAME = 'avgLinesInserted.txt'
 CONFIG_PATH = 'tmp/config.txt' # Stores token, org name, save class roster bool, class roster path, output dir
@@ -65,7 +64,7 @@ class RepoHandler(Thread):
             num_commits = self.__repo.get_commits().totalCount - 1 # commits always include the one created by github-classroom, want to avoid counting that
 
             if (num_commits <= 0): # skip repo if repo is created (with starter files), but no commits are made
-                print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because it has 0 commits.{WHITE}')
+                print(f'  > {LIGHT_RED}Skipping `{self.__repo.name}` because it has 0 commits.{WHITE}')
                 logging.warning(f'Skipping repo `{self.__repo.name}` because it has 0 commits.')
                 return 
 
@@ -90,10 +89,10 @@ class RepoHandler(Thread):
                 return 
 
         except IndexError as e: # Catch exception raised by get_repo_stats
-            print(f'{LIGHT_RED}IndexError while finding average lines per commit for `{self.__repo.name}`.{WHITE}') # Print error to end user
+            print(f'  > {LIGHT_RED}IndexError while finding average lines per commit for `{self.__repo.name}`.{WHITE}') # Print error to end user
             logging.warning(f'IndexError while finding average lines per commit for `{self.__repo.name}`.') # log warning to log file
         except GithubException as e: # likely because github repo is made (without starter files) but no commits
-            print(f'{LIGHT_RED}Skipping `{self.__repo.name} because {e.data["message"]} (pygithub exception){WHITE}')
+            print(f'  > {LIGHT_RED}Skipping `{self.__repo.name} because {e.data["message"]} (pygithub exception){WHITE}')
         except: # Catch exception raised and interrupt main thread
             print(f'  > {LIGHT_RED}ERROR: Sorry, ran into a problem while cloning `{self.get_name()}`. Check {LOG_FILE_PATH}.{WHITE}') # print error to end user
             logging.exception('ERROR:') # log error to log file (logging automatically is passed exception)
@@ -609,6 +608,9 @@ def main():
         print()
         print(e)
         logging.error(e)
+    except IndexError as e:
+        print()
+        print("ERROR: IndexError has been thrown (likely because config file does not match with current format)")
     except Exception as e: # If anything else happens
         print(f'ERROR: Something happened. Check {LOG_FILE_PATH}')
         logging.error(e)
