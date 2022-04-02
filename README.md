@@ -7,7 +7,7 @@ Welcome to the GradingScripts, home of all the scripts needed to grade the GCIS 
 - [Full version](README_ORIG.md)
 - [Abriged](README_ALT.md)
 
-#### If you are getting a config mismatch, make sure the file is formatted like this:
+##### If you are getting a config mismatch, make sure the file is formatted like this:
 `config.txt`
 ```
 Token: GITHUB_TOKEN
