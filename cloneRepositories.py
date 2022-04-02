@@ -89,10 +89,10 @@ class RepoHandler(Thread):
                 return 
 
         except IndexError as e: # Catch exception raised by get_repo_stats
-            print(f'  > {LIGHT_RED}IndexError while finding average lines per commit for `{self.__repo.name}`.{WHITE}') # Print error to end user
-            logging.warning(f'IndexError while finding average lines per commit for `{self.__repo.name}`.') # log warning to log file
+            print(f'  > {LIGHT_RED}IndexError while finding average lines per commit for `{self.get_name()}`.{WHITE}') # Print error to end user
+            logging.warning(f'IndexError while finding average lines per commit for `{self.get_name()}`.') # log warning to log file
         except GithubException as e: # likely because github repo is made (without starter files) but no commits
-            print(f'  > {LIGHT_RED}Skipping `{self.__repo.name} because {e.data["message"]} (pygithub exception){WHITE}')
+            print(f'  > {LIGHT_RED}Skipping `{self.get_name()} because {e.data["message"]} (pygithub exception){WHITE}')
         except: # Catch exception raised and interrupt main thread
             print(f'  > {LIGHT_RED}ERROR: Sorry, ran into a problem while cloning `{self.get_name()}`. Check {LOG_FILE_PATH}.{WHITE}') # print error to end user
             logging.exception('ERROR:') # log error to log file (logging automatically is passed exception)
