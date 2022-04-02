@@ -38,19 +38,14 @@ class RepoHandler(Thread):
         except: # Catch exception raised and interrupt main thread
             rev_list_process = subprocess.Popen(['git', 'log', '--reverse', '--date-order', '--date=local', '--max-parents=0' '--pretty="format=%ci (%s by %cn)"'], cwd=self.__repo_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             line = None
-            try:
-                i = 0
-                for line in iter(rev_list_process.stdout.readline, b'\n'): # b'\n'-separated lines
-                    if (i == 1): # really terrible way of doing this, but this guarantees to grab the date 
-                        break
-                    line = line.decode().strip() # line is read in bytes. Decode to str
-            except:
-                pass
+
+            for line in iter(rev_list_process.stdout.readline, b'\n'): # b'\n'-separated lines
+                line = line.decode().strip() # line is read in bytes. Decode to str
             
             if re.match(r'^error:|^warning:|^fatal:', line):
                 print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}`\n\t{line}. {WHITE}') # print error to end user
             else:
-                print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}` because the hash is invalid (date is likely too far)\n\tOldest commit: {line}). {WHITE}') # print error to end user
+                print(f'  > {LIGHT_RED}Skipping `{self.__folder_name}` because the hash is invalid (date is likely too far)\n\tOldest commit: {line.split("Date:   ")[1]}. {WHITE}') # print error to end user
             logging.exception('ERROR:') # log error to log file (logging automatically is passed exception)
 
 
