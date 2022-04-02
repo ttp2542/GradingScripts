@@ -35,10 +35,10 @@ class RepoHandler(Thread):
 
     Each thread only clones one repo.
     '''
-    __slots___ = ['__repo', '__assignment_name', '__date_due', '__time_due', '__students', '__student_filename', '__initial_path', '__repo_path']
+    __slots___ = ['__repo', '__assignment_name', '__date_due', '__time_due', '__students', '__student_filename', '__initial_path', '__repo_path', '__stuident_name', '__repo_stats']
 
 
-    def __init__(self, repo: Repository, assignment_name: str, date_due: str, time_due: str, students: dict, student_filename: str, initial_path: Path):
+    def __init__(self, repo: Repository, assignment_name: str, date_due: str, time_due: str, students: dict, student_filename: str, initial_path: Path, repo_stats: bool = False):
         self.__repo = repo # PyGithub repo object
         self.__assignment_name = assignment_name # Repo name prefix
         self.__date_due = date_due 
@@ -46,8 +46,11 @@ class RepoHandler(Thread):
         self.__students = students #
         self.__student_filename = student_filename
         self.__initial_path = initial_path
+        self.__student_name = None # student's real name
+        self.__repo_stats = repo_stats
         if self.__student_filename: # If a classroom roster is used, replace github name with real name
-            self.__repo_path = self.__initial_path / get_new_repo_name(self.__repo, self.__students, self.__assignment_name) # replace repo name when cloning to have student's real name
+            self.__student_name = get_new_repo_name(self.__repo, self.__students, self.__assignment_name)
+            self.__repo_path = self.__initial_path / self.__student_name # replace repo name when cloning to have student's real name
         else:
             self.__repo_path = self.__initial_path / self.__repo.name
         super().__init__()
@@ -76,11 +79,14 @@ class RepoHandler(Thread):
                 self.clone_repo() # clones repo
                 commit_hash = self.get_commit_hash() # get commit hash at due date
                 self.rollback_repo(commit_hash) # rollback repo to commit hash
-                self.get_repo_stats() # get average lines per commit
+                
+                if self.__repo_stats:
+                    self.get_repo_stats() # get average lines per commit
+
             else:
-                print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because it was created past the due date (created: {date_repo}).{WHITE}')
+                print(f'  > {LIGHT_RED}Skipping `{self.get_name()}` because it was created past the due date (created: {date_repo}).{WHITE}')
                 #print(f"""{LIGHT_RED}Skipping `{self.__repo.name}` because it was created past the due date (created: {date_repo}).{WHITE}\n\tOLDEST COMMIT:\n\t\tauthor={self.__repo.get_commits().reversed[0].commit.author.name},\n\t\tcreated={self.__repo.get_commits().reversed[0].commit.author.date + timedelta(hours = UTC_OFFSET)},\n\t\tmessage={self.__repo.get_commits().reversed[0].commit.message}\n\tNEWEST COMMIT:\n\t\tauthor={self.__repo.get_commits()[0].commit.author.name},\n\t\tcreated={self.__repo.get_commits()[0].commit.author.date + timedelta(hours = UTC_OFFSET)},\n\t\tmessage={self.__repo.get_commits()[0].commit.message}""")
-                logging.warning(f'Skipping `{self.__repo.name}`  because it was created past the due date (created: {date_repo}).')
+                logging.warning(f'Skipping `{self.get_name()}`  because it was created past the due date (created: {date_repo}).')
                 return 
 
         except IndexError as e: # Catch exception raised by get_repo_stats
@@ -89,7 +95,7 @@ class RepoHandler(Thread):
         except GithubException as e: # likely because github repo is made (without starter files) but no commits
             print(f'{LIGHT_RED}Skipping `{self.__repo.name} because {e.data["message"]} (pygithub exception){WHITE}')
         except: # Catch exception raised and interrupt main thread
-            print(f'{LIGHT_RED}ERROR: Sorry, ran into a problem while cloning `{self.__repo.name}`. Check {LOG_FILE_PATH}.{WHITE}') # print error to end user
+            print(f'  > {LIGHT_RED}ERROR: Sorry, ran into a problem while cloning `{self.get_name()}`. Check {LOG_FILE_PATH}.{WHITE}') # print error to end user
             logging.exception('ERROR:') # log error to log file (logging automatically is passed exception)
             _thread.interrupt_main() # Interrupt main thread. 
 
@@ -101,16 +107,16 @@ class RepoHandler(Thread):
         Due to some weird authentication issues. Git clone might need to have the github link with the token passed e.g.
         https://www.<token>@github.com/<organization>/<Repository.name>
         '''
-        
-        print(f'Cloning {self.__repo.name} into {self.__repo_path}...') # tell end user what repo is being cloned and where it is going to
+
+        print(f'  > Cloning {self.get_name()}...') # tell end user what repo is being cloned and where it is going to
         # run process on system that executes 'git clone' command. stdout is redirected so it doesn't output to end user
         clone_process = subprocess.Popen(['git', 'clone', self.__repo.clone_url, f'{str(self.__repo_path)}'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # git clone to output file, Hides output from console
         try:
             self.log_errors_given_subprocess(clone_process) # reads output line by line and checks for errors that occured during cloning
         except Exception as e:
-            print(f'{LIGHT_RED}Skipping `{self.__repo.name}` because clone failed (likely due to invalid filename).{WHITE}') # print error to end user
-            logging.warning(f'Skipping repo `{self.__repo.name}` because clone failed (likely due to invalid filename).') # log error to log file
-
+            print(f'  > {LIGHT_RED}Skipping `{self.get_name()}` because clone failed (likely due to invalid filename).{WHITE}') # print error to end user
+            logging.warning(f'Skipping repo `{self.get_name()}` because clone failed (likely due to invalid filename).') # log error to log file
+    
 
     def get_commit_hash(self) -> str:
         '''
@@ -135,9 +141,18 @@ class RepoHandler(Thread):
         try:
             self.log_errors_given_subprocess(checkout_process)
         except Exception as e:
-            print(f'{LIGHT_RED}Rollback failed for `{self.__repo.name}` (likely due to invalid filename at specified commit).{WHITE}')
-            logging.warning(f'Rollback failed for `{self.__repo.name}` (likely due to invalid filename at specified commit).')
-        
+            print(f'  > {LIGHT_RED}Rollback failed for `{self.get_name()}` (likely due to invalid filename at specified commit).{WHITE}')
+            logging.warning(f'Rollback failed for `{self.get_name()}` (likely due to invalid filename at specified commit).')
+    
+    def get_name(self) -> str:
+        '''
+        Returns what name should be printed when cloning repos
+        '''
+
+        if self.__student_name:
+            return f'{self.__repo.name} ({self.__student_name})'
+        else:
+            return f'{self.__repo.name}'
 
     def get_repo_stats(self):
         '''
@@ -282,7 +297,7 @@ def file_exists_handler(path):
         Path.mkdir(path)
 
 
-def save_config(token: str, organization: Organization, use_classlist: bool, student_filename: str, output_dir: Path):
+def save_config(token: str, organization: Organization, use_classlist: bool, student_filename: str, output_dir: Path, save_repo_stats: str, add_timestamp:str):
     '''
     Save parameters into config file to be read on future runs
     '''
@@ -296,6 +311,10 @@ def save_config(token: str, organization: Organization, use_classlist: bool, stu
         config.write(f'Classroom Roster Path: {student_filename}')
         config.write('\n')
         config.write(f'Output Directory: {str(output_dir)}')
+        config.write('\n')
+        config.write(f'Get average lines per repo: {str(save_repo_stats)}')
+        config.write('\n')
+        config.write(f'Add timestamp to folder: {str(add_timestamp)}')
 
 
 def read_config_raw() -> tuple:
@@ -320,7 +339,18 @@ def read_config_raw() -> tuple:
                 use_classlist = False
                 config.readline()
             output_dir = Path(config.readline().strip().split(': ')[1])
-    return (token, organization, use_classlist, student_filename, output_dir)
+            save_repo_stats = config.readline().strip().split(': ')[1]
+            if save_repo_stats == 'True':
+                save_repo_stats = True
+            else:
+                save_repo_stats = False
+            add_timestamp = config.readline().strip().split(': ')[1]
+            if add_timestamp == 'True':
+                add_timestamp = True
+            else:
+                add_timestamp = False
+
+    return (token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp)
 
 
 def read_config() -> tuple:
@@ -328,7 +358,7 @@ def read_config() -> tuple:
     Checks whether config already exists, if so and use_classlist is False, ask for class roster path
     '''
     if opener(CONFIG_PATH): # If config already exists
-        token, organization, use_classlist, student_filename, output_dir = read_config_raw() # get variables
+        token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp = read_config_raw() # get variables
         if use_classlist == False:
             print('OPTIONAL: Enter filename of csv file containing username and name of students. To ignore, just hit `enter`')
             student_filename = input('If ignored, repo names will not be changed to match student names: ')
@@ -341,11 +371,12 @@ def read_config() -> tuple:
                     use_classlist = 'False'
             else:
                 use_classlist = 'False'
-            save_config(token, organization, use_classlist, student_filename, output_dir)
+            save_config(token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp)
     else:
         make_default_config()
-        token, organization, use_classlist, student_filename, output_dir = read_config_raw() # Update return variables
-    return (token, organization, student_filename, output_dir)
+        token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp = read_config_raw() # Update return variables
+    
+    return (token, organization, student_filename, output_dir, save_repo_stats, add_timestamp)
 
 
 def make_default_config():
@@ -367,13 +398,27 @@ def make_default_config():
             use_classlist = 'False'
     else:
         use_classlist = 'False'
+
     output_dir = Path(input('Output directory for assignment files (`enter` for current directory): '))
     if not output_dir:
         output_dir = Path.cwd()
     while not Path.is_dir(output_dir):
         print(f'Directory `{output_dir}` not found.')
         output_dir = Path(input('Output directory for assignment files (`enter` for current directory): '))
-    save_config(token, organization, use_classlist, student_filename, output_dir)
+
+    save_repo_stats = input('Generate average lines per repository? (Y/N): ')
+    if 'y' in save_repo_stats.lower():
+        save_repo_stats = 'True'
+    elif 'n' in save_repo_stats.lower():
+        save_repo_stats = 'False'
+
+    add_timestamp = input('Add timestamp to folder name (useful for keeping track of pull times)? (Y/N): ')
+    if 'y' in add_timestamp.lower():
+        add_timestamp = 'True'
+    elif 'n' in save_repo_stats.lower():
+        add_timestamp = 'False'
+
+    save_config(token, organization, use_classlist, student_filename, output_dir, save_repo_stats, add_timestamp)
 
 
 def check_git_version():
@@ -485,7 +530,7 @@ def main():
         # Check local PyGithub module version is compatible with script
         check_pygithub_version()
         # Read config file, if doesn't exist make one using user input.
-        token, organization, student_filename, output_dir = read_config()
+        token, organization, student_filename, output_dir, save_repo_stats, add_timestamp = read_config()
 
         # Create Organization to access repos
         git_org_client = Github(token.strip(), pool_size = MAX_THREADS).get_organization(organization.strip())
@@ -494,14 +539,19 @@ def main():
         assignment_name = get_assignment_name()
         date_due = get_date_due()
         time_due = get_time_due()
-
+        
         # Sets path to output directory inside assignment folder where repos will be cloned
-        time_format = datetime.strptime(f'{date_due} {time_due}', '%Y-%m-%d %H:%M') # convert inputs to date time
-        time_folder = datetime.strftime(time_format, '%m-%d-%Y-%H-%M-%S') # github classroom styled format
-        initial_path = output_dir / f"{assignment_name}-{time_folder}"
+
+        if bool(add_timestamp):
+            time_format = datetime.strptime(f'{date_due} {time_due}', '%Y-%m-%d %H:%M') # convert inputs to date time
+            time_folder = datetime.strftime(time_format, '%m-%d-%Y-%H-%M-%S') # github classroom styled format
+            initial_path = output_dir / f"{assignment_name}-{time_folder}"
+        else:
+            initial_path = output_dir / assignment_name
 
         print() # new line for formatting reasons
 
+        print(f"Output directory: {initial_path}")
         # If student roster is specified, get repos list using proper function
         students = dict() # student dict variable do be used im main scope
         if student_filename: # if classroom roster is specified use it
@@ -518,7 +568,7 @@ def main():
         for repo in repos:
             # Create thread to handle repos and add to thread list
             # Each thread clones a repo, sets it back to due date/time, and gets avg lines per commit
-            thread = RepoHandler(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path)
+            thread = RepoHandler(repo, assignment_name, date_due, time_due, students, bool(student_filename), initial_path, save_repo_stats)
             threads += [thread]
 
         # Run all clone threads
@@ -529,11 +579,16 @@ def main():
         for thread in threads:
             thread.join()
 
-        num_of_lines = write_avg_insersions_file(initial_path, assignment_name)
+        if save_repo_stats:
+            num_of_lines = write_avg_insersions_file(initial_path, assignment_name)
+        
         print()
         print(f'{LIGHT_GREEN}Done.{WHITE}')
         print(f'{LIGHT_GREEN}Cloned {len(next(os.walk(initial_path))[1])}/{len(repos)} repos.{WHITE}')
-        print(f'{LIGHT_GREEN}Found average lines per commit for {num_of_lines}/{len(repos)} repos.{WHITE}')
+
+        if save_repo_stats:
+            print(f'{LIGHT_GREEN}Found average lines per commit for {num_of_lines}/{len(repos)} repos.{WHITE}')
+
     except FileNotFoundError as e: # If classroom roster file specified in config.txt isn't found.
         print()
         print(f'Classroom roster `{student_filename}` not found.')

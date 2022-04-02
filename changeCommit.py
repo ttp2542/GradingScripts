@@ -120,7 +120,7 @@ def main():
         # Check local PyGithub module version is compatible with script
         check_pygithub_version()
         # Read config file, if doesn't exist make one using user input.
-        token, organization, student_filename, output_dir = read_config()
+        token, organization, student_filename, output_dir, save_repo_stats, add_timestamp = read_config()
 
         # makes the path of the directory that should exist
         initial_path = output_dir
